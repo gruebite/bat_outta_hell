@@ -35,6 +35,9 @@ local level_defaults = {
     insect_oblivious_chance = 0.5,
     insect_sensor_radius = 80,
 
+    amethyst_radius = 8,
+    amethyst_consume_score = 100,
+
     hawk_radius = 8,
     hawk_speed_min = 80,
     hawk_speed_max = 140,
@@ -44,7 +47,8 @@ local level_defaults = {
     hawk_homing_cooldown = 8,
     hawk_bump_damage = 10,
 
-    object_bump_damage = 10,
+    object_bump_damage = 5,
+    wall_bump_damage = 1,
 
     -- Level generation.
     width = 1000,
@@ -61,10 +65,9 @@ local conf = {
     width = 960,
     height = 720,
 
-    debug_mode = true,
-    display_diagnostics = true,
-    display_rulers = true,
-    
+    debug_mode = false,
+    display_diagnostics = false,
+    display_rulers = false,
 
     main_color = {0.87, 0.33, 0.09, 1.0},
     accent_color = {0.09, 0.64, 0.87, 1.0},
@@ -75,6 +78,7 @@ local conf = {
     wall_echo_color = {0.86, 0.87, 0.86, 1.0}, -- Default color - white
     object_echo_color = {0.87, 0.85, 0.09, 1.0}, -- Yellow
     exit_echo_color = {0.09, 0.87, 0.18, 1.0}, -- Green
+    amethyst_echo_color = {0.87, 0.09, 0.67, 1.0}, -- Purple
 
 
     -- 9 levels of hell. Level configuration matches `Level` config parameter.
@@ -172,7 +176,7 @@ end
 function love.conf(t)
     t.identity = "BatOuttaHell"
     t.version = "11.2"
-    t.console = true
+    t.console = false
     t.accelerometerjoystick = true
     t.externalstorage = false
     t.gammacorrect = false

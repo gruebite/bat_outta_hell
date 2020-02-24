@@ -116,13 +116,13 @@ function Echo:alive()
 end
 
 function Echo:draw()
-    self.effect(function()
+    --self.effect(function()
         local strength = 1 - math.pow(self.size / self.pool.data:get_current_level_config().echo_vanishing_distance, 1.5)
         love.graphics.setLineWidth(self.pool.data:get_current_level_config().echo_weight * strength)
         self.color[4] = strength
         love.graphics.setColor(self.color)
         love.graphics.circle("line", self.source.x, self.source.y, self.size)
-    end)
+    --end)
 end
 
 function Echo:_is_incoming()
@@ -342,12 +342,18 @@ function Bat:begin_contact(fixt, other, coll)
 
     local owner = other:getUserData()
     if owner.is_exit then
+        _G.ASSETS:get("exit"):play()
         self.pool:emit("reached_exit")
         return
     end
     if owner.is_insect then
         self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
         _G.ASSETS:get("crunch"):play()
+        owner:kill()
+        return
+    elseif owner.is_amethyst then
+        self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
+        _G.ASSETS:get("amethyst"):play()
         owner:kill()
         return
     end
@@ -367,8 +373,10 @@ function Bat:begin_contact(fixt, other, coll)
     self.stunned = true
     if owner.is_hawk then
         self:adjust_energy(-self.pool.data:get_current_level_config().hawk_bump_damage, owner)
-    else
+    elseif owner.is_object then
         self:adjust_energy(-self.pool.data:get_current_level_config().object_bump_damage, owner)
+    else
+        self:adjust_energy(-self.pool.data:get_current_level_config().wall_bump_damage, owner)
     end
 end
 
@@ -386,6 +394,9 @@ function Bat:adjust_energy(by, from)
     if from.is_insect then
         self.pool.data:adjust_score(self.pool.data:get_current_level_config().insect_consume_score)
         max_size = 300
+    elseif from.is_amethyst then
+        self.pool.data:adjust_score(self.pool.data:get_current_level_config().amethyst_consume_score)
+        max_size = 300
     else
         -- Clear current chirps and echos. Too noisy if hit.
         self.chirp_pool:remove(function() return true end)
@@ -401,6 +412,44 @@ function Bat:adjust_energy(by, from)
         return effect.radius < max_size
     end))
     flux.to(effect, 0.5, {radius = max_size, alpha = 0.2})
+end
+
+local Amethyst = setmetatable({}, {__index = Mob})
+Amethyst.__index = Amethyst
+
+function Amethyst.new(pool, x, y)
+    local radius = pool.data:get_current_level_config().amethyst_radius
+    local body = love.physics.newBody(pool.data.world, x, y, "dynamic")
+    local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
+    fixt:setCategory(CONSTS.category_insect)
+    fixt:setMask(CONSTS.category_insect, CONSTS.category_hawk)
+
+    local self = setmetatable({
+        is_amethyst = true,
+        pool = pool,
+        body = body,
+        echo_color = _G.CONF.amethyst_echo_color,
+
+    }, Amethyst)
+    fixt:setUserData(self)
+    return self
+end
+
+function Amethyst:draw()
+    if _G.CONF.debug_mode then
+        love.graphics.setColor(self.echo_color)
+        local x, y = self.body:getPosition()
+        love.graphics.setLineWidth(2)
+        love.graphics.circle("fill", x, y, self.body:getFixtures()[1]:getShape():getRadius())
+    end
+end
+
+function Amethyst:kill()
+    self.dead = true
+end
+
+function Amethyst:alive()
+    return not self.dead
 end
 
 local Insect = setmetatable({}, {__index = Mob})
@@ -428,7 +477,7 @@ function Insect.new(pool, x, y)
         body = body,
         speed = speed,
         ignores_bat = math.random() < pool.data:get_current_level_config().insect_oblivious_chance,
-        echo_color = {0.0, 1.0, 1.0, 1.0},
+        echo_color = _G.CONF.insect_echo_color,
 
         _sensed = {}
     }, Insect)
@@ -514,7 +563,7 @@ function Hawk.new(pool, x, y)
         speed = speed,
         -- 0 means not homing, negatives indicate homing cooldown.
         homing_timer = 0,
-        echo_color = {1.0, 0.0, 0.0, 1.0},
+        echo_color = _G.CONF.hawk_echo_color,
 
         _sensor_fixt = sensor_fixt,
         _sensed = {},
@@ -601,5 +650,6 @@ return {
     Mob = Mob,
     Bat = Bat,
     Insect = Insect,
+    Amethyst = Amethyst,
     Hawk = Hawk,
 }

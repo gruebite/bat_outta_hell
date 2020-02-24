@@ -93,7 +93,8 @@ local function construct_and_enter_level()
     end)
     anim:add_frame(35, function()
         pool.data.bat.invisible = false
-        pool.data.level:construct()
+        print(pool.data.amethyst_level == pool.data.current_level)
+        pool.data.level:construct(pool.data.amethyst_level == pool.data.current_level)
         pool.data.clock = pool.data:get_current_level_config().time_limit
         pool.data.camera:center_on(pool.data.level.entrance.x, pool.data.level.entrance.y)
         pool.data.bat.body:setPosition(pool.data.level.entrance.x, pool.data.level.entrance.y)
@@ -137,6 +138,7 @@ local function enter()
     pool.data.camera = common.Camera.new()
     pool.data.bat = pool:queue(mobs.Bat.new(pool, 0, 0))
     pool.data.level = level
+    pool.data.amethyst_level = math.floor(love.math.random() * 9) + 1
 
     construct_and_enter_level()
 

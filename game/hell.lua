@@ -16,7 +16,7 @@ function Wall.new(pool, tl, br)
         br = br,
         pool = pool,
         body = body,
-        echo_color = {1.0, 1.0, 1.0, 1.0}
+        echo_color = _G.CONF.wall_echo_color
     }, Wall)
     fixt:setUserData(self)
     return self
@@ -37,10 +37,10 @@ function Trunk.new(pool, x, y, radius)
     local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
     fixt:setCategory(CONSTS.category_object)
     local self = setmetatable({
-        is_trunk = true,
+        is_object = true,
         pool = pool,
         body = body,
-        echo_color = {1.0, 1.0, 0.0, 1.0}
+        echo_color = _G.CONF.object_echo_color
     }, Trunk)
     fixt:setUserData(self)
     return self
@@ -66,7 +66,7 @@ function Exit.new(pool, x, y, radius)
         is_exit = true,
         pool = pool,
         body = body,
-        echo_color = {0.0, 1.0, 0.0, 1.0}
+        echo_color = _G.CONF.exit_echo_color
     }, Trunk)
     fixt:setUserData(self)
     return self
@@ -137,7 +137,7 @@ function Level:clear()
     self.pool:flush()
 end
 
-function Level:construct()
+function Level:construct(with_amethyst)
     self:clear()
     self.width = self.pool.data:get_current_level_config().width
     self.height = self.pool.data:get_current_level_config().height
@@ -188,6 +188,10 @@ function Level:construct()
     local exit_pos = new_r2_point(index)
     local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
     self.pool:queue(Exit.new(self.pool, exit_pos.x, exit_pos.y, radius))
+
+    index = index + 1
+    local am_pos = new_r2_point(index)
+    self.pool:queue(mobs.Amethyst.new(self.pool, am_pos.x, am_pos.y))
 
     for i = 1, num_mobs do
         local pos = new_r2_point(index)
