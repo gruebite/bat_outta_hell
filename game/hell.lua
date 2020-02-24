@@ -189,9 +189,11 @@ function Level:construct(with_amethyst)
     local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
     self.pool:queue(Exit.new(self.pool, exit_pos.x, exit_pos.y, radius))
 
-    index = index + 1
-    local am_pos = new_r2_point(index)
-    self.pool:queue(mobs.Amethyst.new(self.pool, am_pos.x, am_pos.y))
+    if with_amethyst then
+        index = index + 1
+        local am_pos = new_r2_point(index)
+        self.pool:queue(mobs.Amethyst.new(self.pool, am_pos.x, am_pos.y))
+    end
 
     for i = 1, num_mobs do
         local pos = new_r2_point(index)

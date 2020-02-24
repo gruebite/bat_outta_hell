@@ -380,6 +380,11 @@ function Bat:begin_contact(fixt, other, coll)
     end
 end
 
+function Bat:clear_echos_and_chirps()
+    self.chirp_pool:remove(function() return true end)
+    self.echo_pool:remove(function() return true end)
+end
+
 function Bat:adjust_energy(by, from)
     local current = self.energy
     self.energy = math.min(100, math.max(0, self.energy + by))
@@ -399,8 +404,7 @@ function Bat:adjust_energy(by, from)
         max_size = 300
     else
         -- Clear current chirps and echos. Too noisy if hit.
-        self.chirp_pool:remove(function() return true end)
-        self.echo_pool:remove(function() return true end)
+        self:clear_echos_and_chirps()
     end
     local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
     function(effect)

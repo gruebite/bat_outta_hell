@@ -176,6 +176,8 @@ local function enter()
         pool.data:adjust_score(pool.data:get_current_level_config().level_complete_score)
 
         pool.data.level:clear()
+        -- Previous level artifacts.
+        pool.data.bat:clear_echos_and_chirps()
 
         local circle_data
         local circle_draw = function(self)
