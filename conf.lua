@@ -1,7 +1,65 @@
 
+local level_defaults = {
+    description = [[
+        No description provided.
+    ]],
+    time_limit = -1,
+
+    echo_speed = 400,
+    -- Echos are slowed down when passing over the bat. This is a good number.
+    echo_speed_dampened = 150,
+    echo_vanishing_distance = 400,
+    echo_weight = 6,
+
+    chirp_speed = 400,
+
+    -- This shouldn't change unless the sprite does.
+    bat_radius = 8,
+    bat_chirp_limit = 3,
+    bat_speed = 120,
+    -- How large the visible waves are. This should remain pretty constant.
+    bat_ear_size = 24,
+
+    insect_radius = 8,
+    insect_consume_energy = 20,
+    insect_speed_min = 40,
+    insect_speed_max = 80,
+    insect_oblivious_chance = 0.5,
+    insect_sensor_radius = 80,
+
+    hawk_radius = 8,
+    hawk_speed_min = 80,
+    hawk_speed_max = 140,
+    hawk_sensor_radius = 160,
+    hawk_homing_time_min = 2,
+    hawk_homing_time_max = 5,
+    hawk_homing_cooldown = 8,
+    hawk_bump_damage = 10,
+
+    object_bump_damage = 10,
+
+    -- Level generation.
+    width = 1000,
+    height = 1000,
+    culling = 0.0,
+    spacing = 400,
+    trunk_radius_min = 20,
+    trunk_radius_max = 30,
+    insect_count = 1,
+    hawk_count = 0,
+}
+
 local conf = {
-    WIDTH = 800,
-    HEIGHT = 600,
+    width = 800,
+    height = 600,
+    -- 9 levels of hell. Level configuration matches `Level` config parameter.
+    levels = {
+        setmetatable({
+            description = [[
+                The easiest level of hell, but do not get comfortable.
+            ]],
+        }, {__index = level_defaults}),
+    },
 }
 
 local i = 2
@@ -22,12 +80,12 @@ function love.conf(t)
 
     t.window.title = "Bat Outta Hell"
     t.window.icon = nil
-    t.window.width = conf.WIDTH
-    t.window.height = conf.HEIGHT
+    t.window.width = conf.width
+    t.window.height = conf.height
     t.window.borderless = false
     t.window.resizable = false
-    t.window.minWIDTH = 1
-    t.window.minHEIGHT = 1
+    t.window.minwidth = 1
+    t.window.minheight = 1
     t.window.fullscreen = false
     t.window.fullscreentype = "desktop"
     t.window.vsync = true

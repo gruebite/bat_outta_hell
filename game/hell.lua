@@ -8,7 +8,7 @@ Wall.__index = Wall
 function Wall.new(pool, tl, br)
     local body = love.physics.newBody(pool.data.world, (br.x + tl.x) / 2, (br.y + tl.y) / 2, "static")
     local fixt = love.physics.newFixture(body, love.physics.newRectangleShape(br.x - tl.x, br.y - tl.y))
-    fixt:setCategory(CONSTS.CATEGORY_OBJECT)
+    fixt:setCategory(_G.CONSTS.category_object)
     local self = setmetatable({
         is_wall = true,
         -- Turn into functions and use shape?
@@ -36,7 +36,7 @@ Trunk.__index = Trunk
 function Trunk.new(pool, x, y, radius)
     local body = love.physics.newBody(pool.data.world, x, y, "static")
     local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
-    fixt:setCategory(CONSTS.CATEGORY_OBJECT)
+    fixt:setCategory(CONSTS.category_object)
     local self = setmetatable({
         is_trunk = true,
         pool = pool,
@@ -62,9 +62,8 @@ Exit.__index = Exit
 function Exit.new(pool, x, y, radius)
     local body = love.physics.newBody(pool.data.world, x, y, "static")
     local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
-    fixt:setCategory(CONSTS.CATEGORY_OBJECT)
-    fixt:setMask(CONSTS.CATEGORY_INSECT, CONSTS.CATEGORY_HAWK)
-    fixt:setSensor(true)
+    fixt:setCategory(CONSTS.category_object)
+    fixt:setMask(CONSTS.category_insect, CONSTS.category_hawk)
     local self = setmetatable({
         is_exit = true,
         pool = pool,
@@ -131,7 +130,8 @@ end
 
 function Level:clear()
     self.pool:remove(function(e)
-        local yes = e.is_wall or e.is_trunk
+        -- Everything but the bat.
+        local yes = not e.is_bat
         if yes then
             e:destroy()
         end
@@ -140,22 +140,22 @@ function Level:clear()
     self.pool:flush()
 end
 
-function Level:construct(options)
+function Level:construct()
     self:clear()
-    self.width = options.width
-    self.height = options.height
+    self.width = self.pool.data:get_current_level_config().width
+    self.height = self.pool.data:get_current_level_config().height
     self:construct_perimeter(self.width, self.height)
 
     -- Chance to cull a tree.
-    local culling = options.culling or 0
+    local culling = self.pool.data:get_current_level_config().culling or 0
     -- Threshold for r2 minimun guaranteed distance (scaled).
-    local spacing = options.spacing or 200
+    local spacing = self.pool.data:get_current_level_config().spacing or 200
 
-    local trunk_radius_min = options.trunk_radius_min or 20
-    local trunk_radius_max = options.trunk_radius_max or 30
+    local trunk_radius_min = self.pool.data:get_current_level_config().trunk_radius_min or 20
+    local trunk_radius_max = self.pool.data:get_current_level_config().trunk_radius_max or 30
     -- Number of mob start positions generated.
-    local insect_count = options.insect_count or 3
-    local hawk_count = options.insect_count or 0
+    local insect_count = self.pool.data:get_current_level_config().insect_count or 3
+    local hawk_count = self.pool.data:get_current_level_config().hawk_count or 1
     local num_mobs = insect_count + hawk_count
 
     local start = love.math.random(0, math.pow(2, 31) / 2)
@@ -187,7 +187,7 @@ function Level:construct(options)
         local x, y = self:_r2(index)
         local pos = geom.Vec2.new(x, y):scale(self.width, self.height):subtract(self.width / 2, self.height / 2)
         if insect_count > 0 and hawk_count > 0 then
-            if love.graphics.random() * (insect_count + hawk_count) < insect_count then
+            if love.math.random() * (insect_count + hawk_count) < insect_count then
                 insect_count = insect_count - 1
                 self.pool:queue(mobs.Insect.new(self.pool, pos.x, pos.y))
             else

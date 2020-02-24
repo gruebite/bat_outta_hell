@@ -3,10 +3,25 @@ local nata = require("lib.nata")
 local flux = require("lib.flux")
 
 local common = require("common")
+local state = require("common.state")
 local mobs = require(_P(..., "mobs"))
 local hell = require(_P(..., "hell"))
 
 local pool
+
+--[[
+Game callbacks.
+--]]
+
+local function bat_energy_adjusted(by, prev, curr)
+    if curr == 0 then
+        state.switch("ui.title")
+    end
+end
+
+local function bat_reached_exit()
+    pool.data.level:clear()
+end
 
 --[[
 Collision callbacks.
@@ -56,15 +71,21 @@ local function enter()
         groups = {
         },
         systems = {
-            nata.oop()
+            nata.oop {
+                include = {"update", "draw"}
+            }
         }
     })
     pool.data = {
-        world = world
+        world = world,
+        current_level = 1,
+        get_current_level_config = function(self)
+            return _G.CONF.levels[self.current_level]
+        end,
     }
 
     local level = hell.Level.new(pool)
-    level:construct({width = 1000, height = 1000})
+    level:construct()
     local bat = mobs.Bat.new(pool, level.entrance.x, level.entrance.y)
     pool:queue(bat)
 
@@ -72,6 +93,9 @@ local function enter()
     pool.data.camera:center_on(level.entrance.x, level.entrance.y)
     pool.data.bat = bat
     pool.data.level = level
+
+    pool:on("energy_adjusted", bat_energy_adjusted)
+    pool:on("reached_exit", bat_reached_exit)
 end
 
 function love.update(dt)
@@ -122,9 +146,9 @@ function love.draw()
     local bottom_margin = 30
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", _G.CONF.WIDTH / 2 - bar_width_h, _G.CONF.HEIGHT - bar_height_h - bottom_margin, bar_width, bar_height)
+    love.graphics.rectangle("line", _G.CONF.width / 2 - bar_width_h, _G.CONF.height - bar_height_h - bottom_margin, bar_width, bar_height)
     local energy = pool.data.bat.energy / 100
-    love.graphics.rectangle("fill", _G.CONF.WIDTH / 2 - bar_width_h, _G.CONF.HEIGHT - bar_height_h - bottom_margin, bar_width * energy, bar_height)
+    love.graphics.rectangle("fill", _G.CONF.width / 2 - bar_width_h, _G.CONF.height - bar_height_h - bottom_margin, bar_width * energy, bar_height)
 end
 
 return {

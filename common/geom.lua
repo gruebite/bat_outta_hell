@@ -10,12 +10,6 @@ function Vec2.new(x, y)
     end
 end
 
-Vec2.ZERO = Vec2.new()
-Vec2.UP = Vec2.new(0, -1)
-Vec2.DOWN = Vec2.new(0, 1)
-Vec2.LEFT = Vec2.new(-1, 0)
-Vec2.RIGHT = Vec2.new(1, 0)
-
 function Vec2.from_angle(rads, mag)
     local self = Vec2.new(mag or 1, 0)
     return self:rotate(rads)

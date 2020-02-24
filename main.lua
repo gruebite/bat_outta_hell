@@ -6,16 +6,19 @@ TODO (- not started; + started; * finished)
 * Collisions and physics.
 * Bat sprites and basic sounds.
 * Chirping and echoing with raycasting.
-- Update UI to be more squishy.
 * Create finite world representation.
 * Generate world function with:
-    + Configuration for difficulty, size, etc.
-    + Builds varying sized trunks and boxes (houses).
+    * Builds varying sized trunks.
     * Constructs outer wall.
     * Picks a start spawn and end location.
-- Insects, some run, some float.
-- Hawks, which chase you for awhile.
+    + Configuration for difficulty, size, etc.
+    - Builds boxes (houses).
+* Insects, some run, some float.
+* Hawks, which chase you for awhile.
+- Levels, scoring, progression.
 - Speedy mode for bat which burns energy by holding chirp button.
+- Update UI to be more squishy.
+- Improve stunned and taking damage feedback. Add invulnerability.
 - Title screen with configuration.
     - Animated.
 - Scoreboard.
@@ -45,17 +48,17 @@ function _G._P(this, path)
     return this .. path:sub(i)
 end
 
+-- Globals are all caps.
 _G.ASSETS = require("common").Assets.new()
 _G.CONF = require("conf")
 _G.CONSTS = {
-    CATEGORY_BAT = 1,
-    CATEGORY_OBJECT = 2,
-    CATEGORY_INSECT = 3,
-    CATEGORY_HAWK = 4,
-    CATEGORY_SENSOR = 5,
+    category_bat = 1,
+    category_object = 2,
+    category_insect = 3,
+    category_hawk = 4,
+    category_sensor = 5,
 }
 
--- Returns 'n' rounded to the nearest 'deci'th (defaulting whole numbers).
 function math.round(n, deci) deci = 10^(deci or 0) return math.floor(n * deci + .5) / deci end
 function math.multiple(n, size) size = size or 10 return math.round(n / size) * size end
 
@@ -82,4 +85,4 @@ function table.deepcopy(t, into)
     return into
 end
 
-require("boot")
+require("common.state").switch("title")
