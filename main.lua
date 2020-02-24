@@ -59,6 +59,11 @@ _G.CONSTS = {
     category_hawk = 4,
     category_sensor = 5,
 }
+_G.CONTROL_KEYS = function(key, scancode, isrepeat)
+    if key == "m" and not isrepeat then
+        love.audio.setVolume(1 - love.audio.getVolume())
+    end
+end
 
 function math.round(n, deci) deci = 10^(deci or 0) return math.floor(n * deci + .5) / deci end
 function math.multiple(n, size) size = size or 10 return math.round(n / size) * size end

@@ -25,7 +25,7 @@ local level_defaults = {
     bat_boost_delay = 0.2, -- Before boosting occurs.
     bat_boost_energy_decay = 5, -- Energy/second.
     -- How large the visible waves are. This should remain pretty constant.
-    bat_ear_size = 24,
+    bat_ear_size = 32,
 
     insect_radius = 8,
     insect_consume_energy = 5,
@@ -178,7 +178,7 @@ function love.conf(t)
     t.gammacorrect = false
 
     t.window.title = "Bat Outta Hell"
-    t.window.icon = nil
+    t.window.icon = "assets/icon.png"
     t.window.width = conf.width
     t.window.height = conf.height
     t.window.borderless = false

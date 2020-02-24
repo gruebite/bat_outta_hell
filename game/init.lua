@@ -7,6 +7,7 @@ local state = require("common.state")
 local mobs = require(_P(..., "mobs"))
 local hell = require(_P(..., "hell"))
 
+local paused = false
 -- Current running animation. Usually a driver for more animations.
 local anim
 local pool
@@ -96,6 +97,7 @@ local function construct_and_enter_level()
         pool.data.clock = pool.data:get_current_level_config().time_limit
         pool.data.camera:center_on(pool.data.level.entrance.x, pool.data.level.entrance.y)
         pool.data.bat.body:setPosition(pool.data.level.entrance.x, pool.data.level.entrance.y)
+        _G.ASSETS:get("enter"):play()
     end)
 end
 
@@ -162,7 +164,7 @@ local function enter()
             pool.data.camera:unapply()
         end
         anim:add_frame(15, function()
-            state.switch("title", "attempt_n", {
+            state.switch("title", "death", "attempt_n", {
                 message = "You died!",
                 score = pool.data.score
             })
@@ -191,7 +193,7 @@ local function enter()
         anim:add_frame(15, function()
             pool.data.current_level = pool.data.current_level + 1
             if pool.data.current_level == 10 then
-                state.switch("title", "attempt_n", {
+                state.switch("title", "escaped", "attempt_n", {
                     message = "You escaped!",
                     score = pool.data.score
                 })
@@ -204,6 +206,9 @@ local function enter()
 end
 
 function love.update(dt)
+    if paused then
+        return
+    end
     -- UI stuff.
     flux.update(dt)
     if anim then
@@ -304,9 +309,14 @@ function love.draw()
 end
 
 function love.keypressed(key, scancode, isrepeat)
+    _G.CONTROL_KEYS(key, scancode, isrepeat)
+    if key == "r" and not isrepeat then
+        _G.CONF.display_rulers = not _G.CONF.display_rulers
+    end
     if key == "i" and love.keyboard.isDown("lctrl") and not isrepeat then
         _G.CONF.display_diagnostics = not _G.CONF.display_diagnostics
     end
+
     if key == "d" and love.keyboard.isDown("lctrl") and not isrepeat then
         _G.CONF.debug_mode = not _G.CONF.debug_mode
     end
@@ -323,12 +333,8 @@ function love.keypressed(key, scancode, isrepeat)
     if key == "q" and love.keyboard.isDown("lctrl") and not isrepeat then
         pool.data.bat.energy = 100
     end
-
-    if key == "r" and not isrepeat then
-        _G.CONF.display_rulers = not _G.CONF.display_rulers
-    end
-    if key == "m" and not isrepeat then
-        love.audio.setVolume(1 - love.audio.getVolume())
+    if key == "space" and not isrepeat then
+        paused = not paused
     end
 end
 

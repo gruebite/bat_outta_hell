@@ -155,6 +155,18 @@ function Level:construct()
     local hawk_count = self.pool.data:get_current_level_config().hawk_count or 1
     local num_mobs = insect_count + hawk_count
 
+    -- Prevents playing from spawning next to wall. This should change if width/height are
+    local bat_radius = self.pool.data:get_current_level_config().bat_radius
+    local buffer_width = self.width - (bat_radius * 2 + 2)
+    local buffer_height = self.height - (bat_radius * 2 + 2)
+    local buffer_x = (bat_radius  + 1)
+    local buffer_y = (bat_radius  + 1)
+
+    local new_r2_point = function(index)
+        local x, y = self:_r2(index)
+        return geom.Vec2.new(x, y):scale(buffer_width, buffer_height):add(buffer_x, buffer_y):subtract(self.width / 2, self.height / 2)
+    end
+
     local start = love.math.random(0, math.pow(2, 31) / 2)
     local index = start + 1
     while true do
@@ -162,27 +174,23 @@ function Level:construct()
             break
         end
         if love.math.random() >= culling then
-            local x, y = self:_r2(index)
-            local pos = geom.Vec2.new(x, y):scale(self.width, self.height):subtract(self.width / 2, self.height / 2)
+            local pos = new_r2_point(index)
             local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
             self.pool:queue(Trunk.new(self.pool, pos.x, pos.y, radius))
         end
         index = index + 1
     end
 
-    local x, y = self:_r2(index)
     index = index + 1
-    self.entrance = geom.Vec2.new(x, y):scale(self.width, self.height):subtract(self.width / 2, self.height / 2)
+    self.entrance = new_r2_point(index)
 
-    local x, y = self:_r2(index)
     index = index + 1
-    local exit_pos = geom.Vec2.new(x, y):scale(self.width, self.height):subtract(self.width / 2, self.height / 2)
+    local exit_pos = new_r2_point(index)
     local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
     self.pool:queue(Exit.new(self.pool, exit_pos.x, exit_pos.y, radius))
 
     for i = 1, num_mobs do
-        local x, y = self:_r2(index)
-        local pos = geom.Vec2.new(x, y):scale(self.width, self.height):subtract(self.width / 2, self.height / 2)
+        local pos = new_r2_point(index)
         if insect_count > 0 and hawk_count > 0 then
             if love.math.random() * (insect_count + hawk_count) < insect_count then
                 insect_count = insect_count - 1

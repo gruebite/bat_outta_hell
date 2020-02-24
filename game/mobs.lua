@@ -385,6 +385,10 @@ function Bat:adjust_energy(by, from)
     if from.is_insect then
         self.pool.data:adjust_score(self.pool.data:get_current_level_config().insect_consume_score)
         max_size = 300
+    else
+        -- Clear current chirps and echos. Too noisy if hit.
+        self.chirp_pool:remove(function() return true end)
+        self.echo_pool:remove(function() return true end)
     end
     local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
     function(effect)
