@@ -65,6 +65,7 @@ Your goal is to escape through 9 levels of hell using only echolocation.
 Use echo colors to determine what something is.]]}},
             {elem = elements.label, height = 20, params = {text = "Exit (next level)", fg = _G.CONF.exit_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Food (restore energy)", fg = _G.CONF.insect_echo_color}},
+            {elem = elements.label, height = 20, params = {text = "Gem (bonus score, only 1 in all of hell!)", fg = _G.CONF.amethyst_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Obstacles (avoid)", fg = _G.CONF.object_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Outer Wall (avoid)", fg = _G.CONF.wall_echo_color}},
             {elem = elements.label, height = 20, padding_v = 0.02, params = {text = "Hellhawk (avoid)", fg = _G.CONF.hawk_echo_color}},
