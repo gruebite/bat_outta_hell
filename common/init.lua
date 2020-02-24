@@ -1,4 +1,5 @@
 
+local slam = require("lib.slam")
 local flux = require("lib.flux")
 local geom = require(_P(..., "geom"))
 

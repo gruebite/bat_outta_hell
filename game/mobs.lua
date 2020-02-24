@@ -286,7 +286,7 @@ function Bat:update(dt)
     if love.mouse.isDown(2) and not self.stunned then
         if  not self._chirping and #self.chirp_pool.entities < self.pool.data:get_current_level_config().bat_chirp_limit then
             self._chirping = true
-            --_G.ASSETS:get("chirp"):play()
+            _G.ASSETS:get("chirp"):play()
             self.chirp_pool:queue(Chirp.new(self.pool))
         end
         self._boosting_timer = self._boosting_timer + dt
