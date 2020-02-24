@@ -255,7 +255,6 @@ function Bat:update(dt)
     self.chirp_pool:emit("update", dt)
 
     if self._stun_timer > 0 then
-        print(self._stun_throwback)
         self.body:setLinearVelocity(self._stun_throwback.x, self._stun_throwback.y)
         self._stun_timer = self._stun_timer - dt
         return
@@ -347,6 +346,7 @@ function Bat:begin_contact(fixt, other, coll)
     end
     if owner.is_insect then
         self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
+        _G.ASSETS:get("crunch"):play()
         owner:kill()
         return
     end

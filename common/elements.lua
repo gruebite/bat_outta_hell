@@ -13,7 +13,11 @@ local style = {
 local function button(params, state, view)
 	state.hovering = false
     input("clicked", function() return params.callback end)
-    input("hover", function() state.hovering = true; return function() state.hovering = false end end)
+    input("hover", function()
+        state.hovering = true
+        _G.ASSETS:get("squeek"):play()
+        return function() state.hovering = false end
+    end)
 		
     return function()
         love.graphics.setFont(params.font or _G.ASSETS:get("font_regular_m"))
@@ -36,7 +40,7 @@ local function label(params, state, view)
         love.graphics.setFont(params.font or _G.ASSETS:get("font_regular_s"))
         love.graphics.setColor(params.fg or style.fg)
         local h = love.graphics.getFont():getHeight()
-		love.graphics.printf(params.text, 0, view.h / 2 - h / 2, view.w, "center")
+		love.graphics.printf(params.text, 0, view.h / 2 - h / 2, view.w, params.align or "center")
 	end
 end
 
@@ -48,7 +52,7 @@ end
 local function vcontainer(params, state, view)
     local elems = {}
     for _, c in ipairs(params.children) do
-        table.insert(elems, helium(c.elem)(c.params, c.width or view.w, c.height or view.h / #params.children))
+        table.insert(elems, helium(c.elem)(c.params, c.width or view.w, c.height or view.h))
     end
     return function()
         love.graphics.setColor(style.bg)
@@ -56,17 +60,7 @@ local function vcontainer(params, state, view)
         local step = 0
         for i, e in ipairs(elems) do
             e:draw(view.w / 2 - e.view.w / 2, step)
-            local inc
-            if params.children[i].vheight then
-                if params.children[i].vheight <= 1 then
-                    inc = params.children[i].vheight * view.h
-                else
-                    inc = params.children[i].vheight
-                end
-            else
-                inc = ((1 / #elems) * view.h)
-            end
-            step = step + inc
+            step = step + params.children[i].height + (params.children[i].padding_v or 0) * view.h
         end
     end
 end

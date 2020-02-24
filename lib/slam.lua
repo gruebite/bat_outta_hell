@@ -78,6 +78,15 @@ function Source:play()
 	return instance
 end
 
+-- Added by gruebite.
+function Source:isPlaying()
+	local playing = false
+	for s in pairs(self.instances) do
+		playing = playing or s:isPlaying()
+	end
+	return playing
+end
+
 function Source:stop()
 	for s in pairs(self.instances) do
 		s:stop()
