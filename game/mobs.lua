@@ -98,7 +98,7 @@ function Echo.new(pool, source, color)
         source = source,
         color = color,
         size = 1,
-        effect = moonshine(moonshine.effects.glow),
+        effect = moonshine(moonshine.effects.gaussianblur),
     }, Echo)
 end
 
@@ -116,13 +116,13 @@ function Echo:alive()
 end
 
 function Echo:draw()
-    --self.effect(function()
+    self.effect(function()
         local strength = 1 - math.pow(self.size / self.pool.data:get_current_level_config().echo_vanishing_distance, 1.5)
         love.graphics.setLineWidth(self.pool.data:get_current_level_config().echo_weight * strength)
         self.color[4] = strength
         love.graphics.setColor(self.color)
         love.graphics.circle("line", self.source.x, self.source.y, self.size)
-    --end)
+    end)
 end
 
 function Echo:_is_incoming()
@@ -289,7 +289,8 @@ function Bat:update(dt)
             self.chirp_pool:queue(Chirp.new(self.pool))
         end
         self._boosting_timer = self._boosting_timer + dt
-        if self._boosting_timer >= self.pool.data:get_current_level_config().bat_boost_delay then
+        -- Only boost if we're moving.
+        if self._boosting_timer >= self.pool.data:get_current_level_config().bat_boost_delay and love.mouse.isDown(1) then
             self._boosting = true
             self._boosting_decay = self._boosting_decay + dt * self.pool.data:get_current_level_config().bat_boost_energy_decay
             if self._boosting_decay > 1 then
@@ -393,7 +394,7 @@ function Bat:adjust_energy(by, from)
     local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
     function(effect)
         love.graphics.setColor(from.echo_color[1], from.echo_color[2], from.echo_color[3], effect.alpha)
-        love.graphics.setLineWidth(3)
+        love.graphics.setLineWidth(5)
         love.graphics.circle("line", x, y, effect.radius)
     end,
     function(effect)

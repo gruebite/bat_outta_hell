@@ -58,8 +58,8 @@ local level_defaults = {
 }
 
 local conf = {
-    width = 800,
-    height = 600,
+    width = 960,
+    height = 720,
 
     debug_mode = true,
     display_diagnostics = true,

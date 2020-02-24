@@ -8,7 +8,7 @@ local mobs = require(_P(..., "mobs"))
 local hell = require(_P(..., "hell"))
 
 local paused = false
--- Current running animation. Usually a driver for more animations.
+-- Current running animation. Usually a driver for more animations/transitions.
 local anim
 local pool
 
@@ -72,7 +72,7 @@ local function construct_and_enter_level()
         local afg = _G.CONF.accent_color
         love.graphics.setColor(afg[1], afg[2], afg[3], intro_data.title_alpha)
         love.graphics.setFont(_G.ASSETS:get("font_italics_m"))
-        love.graphics.printf(pool.data:get_current_level_config().description, w * 1 / 3, h * 2 / 5, w * 1 / 3, "left")
+        love.graphics.printf(pool.data:get_current_level_config().description, w * 1 / 3, h * 2 / 5, w * 1 / 3, "center")
     end
 
     anim = common.Anim.new(0.1, true)
@@ -164,7 +164,7 @@ local function enter()
             pool.data.camera:unapply()
         end
         anim:add_frame(15, function()
-            state.switch("title", "death", "attempt_n", {
+            state.switch("title", "attempt_n", "death", {
                 message = "You died!",
                 score = pool.data.score
             })
@@ -193,7 +193,7 @@ local function enter()
         anim:add_frame(15, function()
             pool.data.current_level = pool.data.current_level + 1
             if pool.data.current_level == 10 then
-                state.switch("title", "escaped", "attempt_n", {
+                state.switch("title", "attempt_n", "escape", {
                     message = "You escaped!",
                     score = pool.data.score
                 })
@@ -304,7 +304,7 @@ function love.draw()
             love.graphics.printf(time_string,  w / 2, h - bottom_margin / 2 - fhh, bar_width / 2, "right")
         end
     else
-        love.graphics.printf(tostring(pool.data.score),  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width, "center")
+        love.graphics.printf("Score: " .. tostring(pool.data.score),  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width, "center")
     end
 end
 

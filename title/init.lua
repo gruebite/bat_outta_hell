@@ -16,7 +16,7 @@ local shows = {
         local w = love.graphics.getWidth()
         local h = love.graphics.getHeight()
     
-        container = helium(elements.vcontainer)({children = {
+        container = helium(elements.vcontainer)({bg = {0, 0, 0, 0}, children = {
             {elem = elements.button, width = 260, height = 50, padding_v = 1/10, params = {text = "Fly!", callback = function()
                 state.switch("game")
             end}},
@@ -26,7 +26,6 @@ local shows = {
             {elem = elements.button, width = 260, height = 50, params = {text = "Quit", callback = function() love.event.quit() end}},
         }}, w * 2 / 4, h * 2 / 4)
         container:draw(w * 2 / 4, h * 1 / 4)
-        _G.ASSETS:get(playing):play()
     end,
     attempts = function()
     end,
@@ -38,31 +37,48 @@ local shows = {
             {elem = elements.label, height = 50, padding_v = 0.2, params = {text = data.message, font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
             {elem = elements.label, height = 300, padding_v = 0.2, params = {text = "Total score: " .. tostring(data.score)}},
             {elem = elements.button, width = 120, height = 40, params = {text = "Main Menu", font = _G.ASSETS:get("font_regular_s"), callback = function() show("main") end}},
-        }}, w * 2 / 4, h * 6 / 8)
-        container:draw(w * 2 / 4, h * 1 / 8)
-        _G.ASSETS:get(playing):play()
+        }}, w, h * 7 / 8)
+        container:draw(0, h * 1 / 8)
     end,
     credits = function()
         local w = love.graphics.getWidth()
         local h = love.graphics.getHeight()
     
         container = helium(elements.vcontainer)({children = {
-            {elem = elements.label, height = 50, padding_v = 0.1, params = {text = "Credits", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
-            {elem = elements.label, height = 25, params = {text = "gruebite - programmer"}},
-            {elem = elements.label, height = 50, padding_v = 0.3, params = {text = "jestbubbles - music"}},
+            {elem = elements.label, height = 70, padding_v = 0.05, params = {text = "Credits", font = _G.ASSETS:get("font_inverted_l"), fg = _G.CONF.main_color}},
+            {elem = elements.label, height = 50, params = {text = "gruebite - programmer", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
+            {elem = elements.label, height = 50, padding_v = 0.3, params = {text = "jestbubbles - music", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
             {elem = elements.button, width = 120, height = 40, params = {text = "Main Menu", font = _G.ASSETS:get("font_regular_s"), callback = function() show("main") end}},
-        }}, w * 2 / 4, h * 6 / 8)
-        container:draw(w * 2 / 4, h * 1 / 8)
+        }}, w, h * 7 / 8)
+        container:draw(0, h * 1 / 8)
     end,
     manual = function()
         local w = love.graphics.getWidth()
         local h = love.graphics.getHeight()
     
         container = helium(elements.vcontainer)({children = {
-            {elem = elements.label, height = 50, padding_v = 0.1, params = {text = "Manual", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
+            {elem = elements.label, height = 70, params = {text = "Manual", font = _G.ASSETS:get("font_inverted_l"), fg = _G.CONF.main_color}},
+            {elem = elements.label, height = 100, padding_v = 0.02, valign = "top", params = {text =
+[[Welcome to Bat Outta Hell!
+
+Your goal is to escape through 9 levels of hell using only echolocation.
+Use echo colors to determine what something is.]]}},
+            {elem = elements.label, height = 20, params = {text = "Exit (next level)", fg = _G.CONF.exit_echo_color}},
+            {elem = elements.label, height = 20, params = {text = "Food (restore energy)", fg = _G.CONF.insect_echo_color}},
+            {elem = elements.label, height = 20, params = {text = "Obstacles (avoid)", fg = _G.CONF.object_echo_color}},
+            {elem = elements.label, height = 20, params = {text = "Outer Wall (avoid)", fg = _G.CONF.wall_echo_color}},
+            {elem = elements.label, height = 20, padding_v = 0.02, params = {text = "Hellhawk (avoid)", fg = _G.CONF.hawk_echo_color}},
+            {elem = elements.label, height = 40, params = {text = "Controls", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
+            {elem = elements.label, height = 150, padding_v = 0.02, valign = "top", params = {text =
+[[Left Click/Hold - Move to location
+Right Click - Send chirp
+Right Hold - Boost speed (drains energy)
+
+m - mute/unmute sound
+r - display rulers]]}},
             {elem = elements.button, width = 120, height = 40, params = {text = "Main Menu", font = _G.ASSETS:get("font_regular_s"), callback = function() show("main") end}},
-        }}, w * 2 / 4, h * 6 / 8)
-        container:draw(w * 2 / 4, h * 1 / 8)
+        }}, w, h * 7 / 8)
+        container:draw(0, h * 1 / 8)
     end
 }
 
@@ -71,6 +87,9 @@ show = function(name, ...)
         container:undraw()
     end
     shows[name](...)
+    if not _G.ASSETS:get(playing):isPlaying() then
+        _G.ASSETS:get(playing):play()
+    end
 end
 
 local function enter(into, play, ...)
@@ -85,7 +104,7 @@ local function enter(into, play, ...)
     _G.ASSETS:load("intro_loop", 1, "intro_loop.wav", "stream")
     _G.ASSETS:load("death", 1, "death.wav", "stream")
     _G.ASSETS:load("enter", 1, "enter.wav", "stream")
-    _G.ASSETS:load("success", 1, "success.wav", "stream")
+    _G.ASSETS:load("escape", 1, "escape.wav", "stream")
     _G.ASSETS:load("font_regular_s", 1, "luciferius_regular.ttf", 16)
     _G.ASSETS:load("font_regular_m", 1, "luciferius_regular.ttf", 24)
     _G.ASSETS:load("font_italics_s", 1, "luciferius_italics.ttf", 16)

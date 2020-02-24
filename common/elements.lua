@@ -40,7 +40,11 @@ local function label(params, state, view)
         love.graphics.setFont(params.font or _G.ASSETS:get("font_regular_s"))
         love.graphics.setColor(params.fg or style.fg)
         local h = love.graphics.getFont():getHeight()
-		love.graphics.printf(params.text, 0, view.h / 2 - h / 2, view.w, params.align or "center")
+        local y = 0
+        if params.valign == "center" then
+            y = view.h / 2 - h / 2
+        end
+		love.graphics.printf(params.text, 0, y, view.w, params.align or "center")
 	end
 end
 
@@ -55,7 +59,7 @@ local function vcontainer(params, state, view)
         table.insert(elems, helium(c.elem)(c.params, c.width or view.w, c.height or view.h))
     end
     return function()
-        love.graphics.setColor(style.bg)
+        love.graphics.setColor(params.bg or style.bg)
         love.graphics.rectangle("fill", 0, 0, view.w, view.h)
         local step = 0
         for i, e in ipairs(elems) do

@@ -17,8 +17,8 @@ TODO (- not started; + started; * finished)
 * Hawks, which chase you for awhile.
 * Speedy mode for bat which burns energy by holding chirp button.
 * Improve stunned and taking damage feedback. (removed: Add invulnerability.)
-- Levels, scoring, progression.
-- Sound effects.
+* Levels, scoring, progression.
+* Sound effects.
 + Title screen. (removed: settings.)
     - Animated
 - Update UI to be more squishy..
