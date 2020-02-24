@@ -17,7 +17,7 @@ local loaders = {
 function Assets.new(basename)
     local self = setmetatable({}, Assets)
     self.basename = basename or "assets/"
-    self._cache = {}
+    self:clear()
     return self
 end
 
@@ -36,7 +36,9 @@ function Assets:load(key, index, filename, ...)
 end
 
 function Assets:clear()
-    self._cache = {}
+    self._cache = {
+        default_font = {love.graphics.newFont()}
+    }
 end
 
 local Anim = {}
@@ -69,14 +71,16 @@ function Anim:update(dt)
     if not self.playing then
         return
     end
-    if self.frame ~= self.prev_frame then
+    if self.frame ~= self.prev_frame and self.frame <= self.frame_count then
         -- Update.
         self.prev_frame = self.frame
         if not self.frames[self.frame] then
             return
         end
         for i, f in ipairs(self.frames[self.frame]) do
-            f(self.frame, i)
+            if f then
+                f(self.frame, i)
+            end
         end
     end
 
@@ -93,6 +97,10 @@ function Anim:update(dt)
     end
     self.accum_t = self.accum_t - self.time_step
     self.frame = self.frame + 1
+end
+
+function Anim:draw()
+    -- This can be set.
 end
 
 function Anim:stop()
@@ -112,6 +120,10 @@ end
 
 function Anim:seek(to)
     self.frame = to
+end
+
+function Anim:seek_end()
+    self.frame = self.frame_count
 end
 
 function Anim:tell()
@@ -137,8 +149,8 @@ function Camera.new()
         scale_y = 1,
         rotation = 0,
         -- Percent of the screen
-        bounds_x = 0.2,
-        bounds_y = 0.2,
+        bounds_x = 0.25,
+        bounds_y = 0.25,
     }, Camera)
 end
 

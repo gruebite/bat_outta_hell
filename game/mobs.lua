@@ -47,6 +47,9 @@ end
 local Mob = {}
 Mob.__index = Mob
 
+-- Defaults to white.
+Mob.echo_color = {1, 1, 1, 1}
+
 function Mob.new()
     return setmetatable({}, Mob)
 end
@@ -118,19 +121,19 @@ function Echo:draw()
         love.graphics.setLineWidth(self.pool.data:get_current_level_config().echo_weight * strength)
         self.color[4] = strength
         love.graphics.setColor(self.color)
-        love.graphics.circle("line", self.source[1], self.source[2], self.size)
+        love.graphics.circle("line", self.source.x, self.source.y, self.size)
     --end)
 end
 
 function Echo:_is_incoming()
     local x, y = self.pool.data.bat.body:getPosition()
-    local dist = Vec2.new(x, y):distance(self.source[1], self.source[2])
+    local dist = Vec2.new(x, y):distance(self.source.x, self.source.y)
     return self.size < (dist - self.pool.data:get_current_level_config().bat_ear_size * 2)
 end
 
 function Echo:_is_outgoing()
     local x, y = self.pool.data.bat.body:getPosition()
-    local dist = Vec2.new(x, y):distance(self.source[1], self.source[2])
+    local dist = Vec2.new(x, y):distance(self.source.x, self.source.y)
     return self.size > (dist + self.pool.data:get_current_level_config().bat_ear_size * 2)
 end
 
@@ -166,7 +169,7 @@ function Chirp:draw()
 end
 
 function Chirp:update(dt)
-    -- For sensors that move without the body moving. Currently bat and chirp are the only ones.
+    -- For sensors that move without the body moving.
     self.body:setAwake(true)
     local new_radius = self._sensor:getShape():getRadius() + self.pool.data:get_current_level_config().chirp_speed * dt
     self._sensor:getShape():setRadius(new_radius)
@@ -179,7 +182,6 @@ end
 function Chirp:begin_contact(fixt, other, coll)
     local self_x, self_y = self.body:getPosition()
     local fx, fy = find_fixture_contact_point(Vec2.new(self_x, self_y), other)
-    table.foreach(other:getUserData(), print)
     self.pool.data.bat.body:getWorld():rayCast(self_x, self_y, fx, fy, function(hit, x, y, xn, yn, fraction)
         if hit:getUserData().is_chirp or hit:getUserData().is_bat then
             return 1
@@ -187,7 +189,7 @@ function Chirp:begin_contact(fixt, other, coll)
         if hit == other then
             local data = other:getUserData()
             -- We use x, y from contact.
-            self.pool.data.bat.echo_pool:queue(Echo.new(self.pool, {x, y}, data.echo_color and table.deepcopy(data.echo_color) or {1.0, 1.0, 1.0, 1.0}))
+            self.pool.data.bat.echo_pool:queue(Echo.new(self.pool, Vec2.new(x, y), data.echo_color and table.deepcopy(data.echo_color) or {1.0, 1.0, 1.0, 1.0}))
         end
         -- Only hit the first one.
         return 0
@@ -215,6 +217,9 @@ function Bat.new(pool, x, y)
         _dir = 0,
         _anim = Anim.new(1 / 20.0, true, true, 3),
 
+        _boosting = false,
+        _boosting_timer = 0,
+        _boosting_decay = 0,
         _chirping = false,
     }, Bat)
     fixt:setUserData(self)
@@ -223,7 +228,9 @@ function Bat.new(pool, x, y)
 end
 
 function Bat:update(dt)
-    self.body:setAwake(true)
+    if self.paused then
+        return
+    end
     self._anim:update(dt)
     -- Update echos.
     self.echo_pool:remove(function(e)
@@ -253,7 +260,13 @@ function Bat:update(dt)
         local mx, my = self.pool.data.camera:mouse_position()
         local vel = Vec2.new(mx, my):subtract(self.body:getPosition())
         if vel:magnitude() > 0 then
-            vel = vel:normalize():scale(self.pool.data:get_current_level_config().bat_speed)
+            local speed
+            if self._boosting then
+                speed = self.pool.data:get_current_level_config().bat_boost_speed
+            else
+                speed = self.pool.data:get_current_level_config().bat_speed
+            end
+            vel = vel:normalize():scale(speed)
         end
         self.body:setLinearVelocity(vel.x, vel.y)
         self._dir = vel:angle()
@@ -261,19 +274,34 @@ function Bat:update(dt)
         self.body:setLinearVelocity(0, 0)
     end
 
-    if love.mouse.isDown(2) and not self._chirping then
-        if #self.chirp_pool.entities < self.pool.data:get_current_level_config().bat_chirp_limit then
+    if love.mouse.isDown(2) then
+        if  not self._chirping and #self.chirp_pool.entities < self.pool.data:get_current_level_config().bat_chirp_limit then
             self._chirping = true
             --_G.ASSETS:get("chirp"):play()
             self.chirp_pool:queue(Chirp.new(self.pool))
         end
+        self._boosting_timer = self._boosting_timer + dt
+        if self._boosting_timer >= self.pool.data:get_current_level_config().bat_boost_delay then
+            self._boosting = true
+            self._boosting_decay = self._boosting_decay + dt * self.pool.data:get_current_level_config().bat_boost_energy_decay
+            if self._boosting_decay > 1 then
+                local amount = math.floor(self._boosting_decay)
+                self._boosting_decay = self._boosting_decay - amount
+                self:adjust_energy(-amount, nil)
+            end
+        end
     end
     if not love.mouse.isDown(2) then
         self._chirping = false
+        self._boosting = false
+        self._boosting_timer = 0
     end
 end
 
 function Bat:draw()
+    if self.invisible then
+        return
+    end
     local x, y = self.body:getPosition()
     love.graphics.setLineWidth(1)
 
@@ -281,7 +309,9 @@ function Bat:draw()
         love.graphics.circle("fill", x, y, self.pool.data:get_current_level_config().bat_ear_size)
     end, "replace", 1)
     -- Only allow rendering on pixels which have a stencil value greater than 0.
-    --love.graphics.setStencilTest("greater", 0)
+    if not _G.CONF.debug_mode then
+        love.graphics.setStencilTest("greater", 0)
+    end
     -- Draw echos.
     self.echo_pool:emit("draw")
     love.graphics.setStencilTest()
@@ -303,7 +333,8 @@ function Bat:begin_contact(fixt, other, coll)
         return
     end
     if owner.is_insect then
-        self:adjust_energy(20)
+        self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
+        self.pool.data:adjust_score(self.pool.data:get_current_level_config().insect_consume_score)
         owner:kill()
         local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
         function(effect)
@@ -324,19 +355,19 @@ function Bat:begin_contact(fixt, other, coll)
     self.body:setLinearVelocity(x * 400, y * 400)
     self.stunned = 0.1
     if owner.is_hawk then
-        self:adjust_energy(-20)
+        self:adjust_energy(-self.pool.data:get_current_level_config().hawk_bump_damage, owner)
     else
-        self:adjust_energy(-10)
+        self:adjust_energy(-self.pool.data:get_current_level_config().object_bump_damage, owner)
     end
 end
 
 function Bat:end_contact(fixt, other, coll)
 end
 
-function Bat:adjust_energy(by)
+function Bat:adjust_energy(by, from)
     local current = self.energy
     self.energy = math.min(100, math.max(0, self.energy + by))
-    self.pool:emit("energy_adjusted", by, current, self.energy)
+    self.pool:emit("energy_adjusted", by, current, self.energy, from)
 end
 
 local Insect = setmetatable({}, {__index = Mob})
@@ -363,7 +394,6 @@ function Insect.new(pool, x, y)
         pool = pool,
         body = body,
         speed = speed,
-        visible = true,
         ignores_bat = math.random() < pool.data:get_current_level_config().insect_oblivious_chance,
         echo_color = {0.0, 1.0, 1.0, 1.0},
 
@@ -399,7 +429,7 @@ function Insect:update(dt)
 end
 
 function Insect:draw()
-    if self.visible then
+    if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         local x, y = self.body:getPosition()
         love.graphics.setLineWidth(2)
@@ -451,7 +481,6 @@ function Hawk.new(pool, x, y)
         speed = speed,
         -- 0 means not homing, negatives indicate homing cooldown.
         homing_timer = 0,
-        visible = true,
         echo_color = {1.0, 0.0, 0.0, 1.0},
 
         _sensor_fixt = sensor_fixt,
@@ -507,7 +536,7 @@ function Hawk:update(dt)
 end
 
 function Hawk:draw()
-    if self.visible then
+    if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         local x, y = self.body:getPosition()
         love.graphics.circle("fill", x, y, self.body:getFixtures()[2]:getShape():getRadius())

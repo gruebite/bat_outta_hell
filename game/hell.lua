@@ -16,7 +16,6 @@ function Wall.new(pool, tl, br)
         br = br,
         pool = pool,
         body = body,
-        visible = true,
         echo_color = {1.0, 1.0, 1.0, 1.0}
     }, Wall)
     fixt:setUserData(self)
@@ -24,7 +23,7 @@ function Wall.new(pool, tl, br)
 end
 
 function Wall:draw()
-    if self.visible then
+    if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         love.graphics.rectangle("fill", self.tl.x, self.tl.y, self.br.x - self.tl.x, self.br.y - self.tl.y)
     end
@@ -41,7 +40,6 @@ function Trunk.new(pool, x, y, radius)
         is_trunk = true,
         pool = pool,
         body = body,
-        visible = true,
         echo_color = {1.0, 1.0, 0.0, 1.0}
     }, Trunk)
     fixt:setUserData(self)
@@ -49,7 +47,7 @@ function Trunk.new(pool, x, y, radius)
 end
 
 function Trunk:draw()
-    if self.visible then
+    if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         local x, y = self.body:getPosition()
         love.graphics.circle("fill", x, y, self.body:getFixtures()[1]:getShape():getRadius())
@@ -68,7 +66,6 @@ function Exit.new(pool, x, y, radius)
         is_exit = true,
         pool = pool,
         body = body,
-        visible = true,
         echo_color = {0.0, 1.0, 0.0, 1.0}
     }, Trunk)
     fixt:setUserData(self)
@@ -76,7 +73,7 @@ function Exit.new(pool, x, y, radius)
 end
 
 function Exit:draw()
-    if self.visible then
+    if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         local x, y = self.body:getPosition()
         love.graphics.circle("fill", x, y, self.body:getFixtures()[1]:getShape():getRadius())

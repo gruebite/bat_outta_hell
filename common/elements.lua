@@ -30,7 +30,23 @@ local function button(params, state, view)
 	end
 end
 
+local function vcontainer(params, state, view)
+    local elems = {}
+    for _, c in ipairs(params.children) do
+        table.insert(elems, helium(c.elem)(c.params, view.w, 50))
+    end
+    return function()
+        love.graphics.setColor(style.bg)
+        love.graphics.rectangle("fill", 0, 0, view.w, view.h)
+        local step = 1 / #elems
+        for i, e in ipairs(elems) do
+            e:draw(0, (i - 1) * step * view.h)
+        end
+    end
+end
+
 return {
     style = style,
     button = button,
+    vcontainer = vcontainer,
 }
