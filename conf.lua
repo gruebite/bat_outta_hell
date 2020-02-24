@@ -28,7 +28,7 @@ local level_defaults = {
     bat_ear_size = 24,
 
     insect_radius = 8,
-    insect_consume_energy = 20,
+    insect_consume_energy = 5,
     insect_consume_score = 8, -- Score.
     insect_speed_min = 40,
     insect_speed_max = 80,
@@ -64,6 +64,18 @@ local conf = {
     debug_mode = true,
     display_diagnostics = true,
     display_rulers = true,
+    
+
+    main_color = {0.87, 0.33, 0.09, 1.0},
+    accent_color = {0.09, 0.64, 0.87, 1.0},
+    default_color = {0.86, 0.87, 0.86, 1.0}, -- White
+    
+    hawk_echo_color = {0.87, 0.33, 0.09, 1.0}, -- Main color - red
+    insect_echo_color = {0.09, 0.64, 0.87, 1.0}, -- Accent color - cyan
+    wall_echo_color = {0.86, 0.87, 0.86, 1.0}, -- Default color - white
+    object_echo_color = {0.87, 0.85, 0.09, 1.0}, -- Yellow
+    exit_echo_color = {0.09, 0.87, 0.18, 1.0}, -- Green
+
 
     -- 9 levels of hell. Level configuration matches `Level` config parameter.
     levels = {
@@ -74,6 +86,7 @@ local conf = {
             description = [[More objects. Are they trees or pillars of fire?]],
             spacing = 200,
             culling = 0.1,
+            object_bump_damage = 20,
         }, {__index = level_defaults}),
         setmetatable({
             description = [[Don't get lost.]],
@@ -82,26 +95,68 @@ local conf = {
             insect_count = 3,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[You have a friend.]],
+            description = [[Something is hunting you.]],
             spacing = 200,
             culling = 0.2,
             insect_count = 2,
             hawk_count = 1,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[]],
+            description = [[Out of the frying pan and into the fire.]],
+            spacing = 300,
+            culling = 0.2,
+            insect_count = 2,
+            hawk_count = 3,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[]],
+            description = [[Find the exit fast. You can't eat them all.]],
+            time_limit = 120,
+            width = 1500,
+            height = 1500,
+            spacing = 300,
+            culling = 0.2,
+            insect_count = 7,
+            insect_consume_energy = 10,
+            insect_consume_score = 16,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[]],
+            description = [[This one is big. And fast.]],
+            width = 800,
+            height = 800,
+            spacing = 800, -- No objects.
+            insect_count = 0,
+            hawk_count = 1,
+            hawk_speed_min = 100,
+            hawk_speed_max = 140,
+            hawk_homing_cooldown = 2,
+            hawk_bump_damage = 30,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[]],
+            description = [[It's a swarm.]],
+            time_limit = 180,
+            width = 1500,
+            height = 1500,
+            spacing = 300,
+            culling = 0.2,
+            insect_count = 7,
+            insect_consume_energy = 10,
+            insect_consume_score = 16,
+            hawk_count = 9,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[]],
+            description = [[You feel weak.]],
+            time_limit = 180,
+            width = 1500,
+            height = 1500,
+            spacing = 300,
+            culling = 0.2,
+            bat_speed = 80,
+            bat_boost_speed = 120,
+            echo_vanishing_distance = 200,
+            insect_count = 7,
+            insect_consume_energy = 4,
+            hawk_count = 9,
+            hawk_bump_damage = 20,
         }, {__index = level_defaults}),
     },
 }

@@ -15,12 +15,13 @@ TODO (- not started; + started; * finished)
     - Builds boxes (houses).
 * Insects, some run, some float.
 * Hawks, which chase you for awhile.
-- Levels, scoring, progression.
 * Speedy mode for bat which burns energy by holding chirp button.
-- Update UI to be more squishy.
-- Improve stunned and taking damage feedback. Add invulnerability.
-- Title screen with configuration.
-    - Animated.
+* Improve stunned and taking damage feedback. (removed: Add invulnerability.)
+- Levels, scoring, progression.
+- Sound effects.
++ Title screen. (removed: settings.)
+    - Animated
+- Update UI to be more squishy..
 - Scoreboard.
 --]]
 

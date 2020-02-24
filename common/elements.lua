@@ -4,10 +4,10 @@ local input = require("lib.helium.core.input")
 
 local style = {
     default = {0, 0, 0, 1},
-    hover = {1, 0, 0, 1},
-    border = {1, 1, 1, 1},
+    hover = _G.CONF.main_color,
+    border = _G.CONF.default_color,
     bg = {0, 0, 0, 1},
-    fg = {1, 1, 1, 1},
+    fg = _G.CONF.default_color,
 }
 
 local function button(params, state, view)
@@ -16,6 +16,7 @@ local function button(params, state, view)
     input("hover", function() state.hovering = true; return function() state.hovering = false end end)
 		
     return function()
+        love.graphics.setFont(params.font or _G.ASSETS:get("font_regular_m"))
 		if state.hovering then
 			love.graphics.setColor(style.hover)
         else
@@ -24,23 +25,48 @@ local function button(params, state, view)
 		love.graphics.rectangle("fill", 0, 0, view.w, view.h)
         love.graphics.setColor(style.border)
 		love.graphics.rectangle("line", 0, 0, view.w, view.h)
-        love.graphics.setColor(style.fg)
+        love.graphics.setColor(params.fg or style.fg)
         local h = love.graphics.getFont():getHeight()
 		love.graphics.printf(params.text, 0, view.h / 2 - h / 2, view.w, "center")
+	end
+end
+
+local function label(params, state, view)
+    return function()
+        love.graphics.setFont(params.font or _G.ASSETS:get("font_regular_s"))
+        love.graphics.setColor(params.fg or style.fg)
+        local h = love.graphics.getFont():getHeight()
+		love.graphics.printf(params.text, 0, view.h / 2 - h / 2, view.w, "center")
+	end
+end
+
+local function spacer(params, state, view)
+    return function()
 	end
 end
 
 local function vcontainer(params, state, view)
     local elems = {}
     for _, c in ipairs(params.children) do
-        table.insert(elems, helium(c.elem)(c.params, view.w, 50))
+        table.insert(elems, helium(c.elem)(c.params, c.width or view.w, c.height or view.h / #params.children))
     end
     return function()
         love.graphics.setColor(style.bg)
         love.graphics.rectangle("fill", 0, 0, view.w, view.h)
-        local step = 1 / #elems
+        local step = 0
         for i, e in ipairs(elems) do
-            e:draw(0, (i - 1) * step * view.h)
+            e:draw(view.w / 2 - e.view.w / 2, step)
+            local inc
+            if params.children[i].vheight then
+                if params.children[i].vheight <= 1 then
+                    inc = params.children[i].vheight * view.h
+                else
+                    inc = params.children[i].vheight
+                end
+            else
+                inc = ((1 / #elems) * view.h)
+            end
+            step = step + inc
         end
     end
 end
@@ -48,5 +74,7 @@ end
 return {
     style = style,
     button = button,
+    label = label,
+    spacer = spacer,
     vcontainer = vcontainer,
 }

@@ -48,7 +48,7 @@ local Mob = {}
 Mob.__index = Mob
 
 -- Defaults to white.
-Mob.echo_color = {1, 1, 1, 1}
+Mob.echo_color = _G.CONF.default_color
 
 function Mob.new()
     return setmetatable({}, Mob)
@@ -211,13 +211,15 @@ function Bat.new(pool, x, y)
         echo_pool = nata.new(),
         pool = pool,
         body = body,
-        stunned = 0,
+        -- Prevents bat from moving until mouse is released.
+        stunned = false,
         energy = 100,
 
         _dir = 0,
         _anim = Anim.new(1 / 20.0, true, true, 3),
 
         _boosting = false,
+        _stun_timer = 0,
         _boosting_timer = 0,
         _boosting_decay = 0,
         _chirping = false,
@@ -252,11 +254,18 @@ function Bat:update(dt)
     self.chirp_pool:flush()
     self.chirp_pool:emit("update", dt)
 
-    if self.stunned > 0 then
-        self.stunned = self.stunned - dt
+    if self._stun_timer > 0 then
+        print(self._stun_throwback)
+        self.body:setLinearVelocity(self._stun_throwback.x, self._stun_throwback.y)
+        self._stun_timer = self._stun_timer - dt
         return
     end
-    if love.mouse.isDown(1) then
+    if not love.mouse.isDown(1) then
+        -- Releasing mouse prevents movement lock.
+        self.stunned = false
+    end
+
+    if love.mouse.isDown(1) and not self.stunned then
         local mx, my = self.pool.data.camera:mouse_position()
         local vel = Vec2.new(mx, my):subtract(self.body:getPosition())
         if vel:magnitude() > 0 then
@@ -274,7 +283,7 @@ function Bat:update(dt)
         self.body:setLinearVelocity(0, 0)
     end
 
-    if love.mouse.isDown(2) then
+    if love.mouse.isDown(2) and not self.stunned then
         if  not self._chirping and #self.chirp_pool.entities < self.pool.data:get_current_level_config().bat_chirp_limit then
             self._chirping = true
             --_G.ASSETS:get("chirp"):play()
@@ -299,6 +308,7 @@ function Bat:update(dt)
 end
 
 function Bat:draw()
+    self.body:setAwake(true)
     if self.invisible then
         return
     end
@@ -317,6 +327,9 @@ function Bat:draw()
     love.graphics.setStencilTest()
 
     love.graphics.setColor(1.0, 1.0, 1.0)
+    if (self.stunned and love.math.random() > 0.2) then
+        love.graphics.setColor(_G.CONF.main_color)
+    end
     love.graphics.draw(_G.ASSETS:get("bat", math.floor(self._anim.frame)), x, y, self._dir, 1, 1, 8, 8)
 
     -- Draw chirps.
@@ -334,26 +347,23 @@ function Bat:begin_contact(fixt, other, coll)
     end
     if owner.is_insect then
         self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
-        self.pool.data:adjust_score(self.pool.data:get_current_level_config().insect_consume_score)
         owner:kill()
-        local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
-        function(effect)
-            love.graphics.setColor(owner.echo_color[1], owner.echo_color[2], owner.echo_color[3], effect.alpha)
-            love.graphics.setLineWidth(3)
-            local x, y = self.body:getPosition()
-            love.graphics.circle("line", x, y, effect.radius)
-        -- 300 is a magic number.
-        end,
-        function(effect)
-            return effect.radius < 300
-        end))
-        flux.to(effect, 0.5, {radius = 300, alpha = 0.2})
         return
     end
-    --_G.ASSETS:get("squeek"):play()
+    _G.ASSETS:get("squeek"):play()
     local x, y = coll:getNormal()
-    self.body:setLinearVelocity(x * 400, y * 400)
-    self.stunned = 0.1
+    -- Determine if the normal points to us or the object. We want it to point away from object.
+    local bx, by = self.body:getPosition()
+    local ox, oy = other:getBody():getPosition()
+    -- If direction from us to object is pointing in the same direction as the normal, flip.
+    if Vec2.new(x, y):dot(Vec2.new(ox, oy):subtract(bx, by)) > 0 then
+        x = -x
+        y = -y
+    end
+
+    self._stun_throwback = Vec2.new(x * 400, y * 400)
+    self._stun_timer = 0.1
+    self.stunned = true
     if owner.is_hawk then
         self:adjust_energy(-self.pool.data:get_current_level_config().hawk_bump_damage, owner)
     else
@@ -361,13 +371,31 @@ function Bat:begin_contact(fixt, other, coll)
     end
 end
 
-function Bat:end_contact(fixt, other, coll)
-end
-
 function Bat:adjust_energy(by, from)
     local current = self.energy
     self.energy = math.min(100, math.max(0, self.energy + by))
     self.pool:emit("energy_adjusted", by, current, self.energy, from)
+
+    -- Animate if from is something.
+    if not from then
+        return
+    end
+    local x, y = self.body:getPosition()
+    local max_size = 20
+    if from.is_insect then
+        self.pool.data:adjust_score(self.pool.data:get_current_level_config().insect_consume_score)
+        max_size = 300
+    end
+    local effect = self.pool:queue(EffectMob.new(self.pool, {radius = 0, alpha = 1.0},
+    function(effect)
+        love.graphics.setColor(from.echo_color[1], from.echo_color[2], from.echo_color[3], effect.alpha)
+        love.graphics.setLineWidth(3)
+        love.graphics.circle("line", x, y, effect.radius)
+    end,
+    function(effect)
+        return effect.radius < max_size
+    end))
+    flux.to(effect, 0.5, {radius = max_size, alpha = 0.2})
 end
 
 local Insect = setmetatable({}, {__index = Mob})

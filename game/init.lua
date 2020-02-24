@@ -38,15 +38,25 @@ local function end_contact(a, b, coll)
 end
 
 local function pre_solve(a, b, coll)
-    --[[if persisting == 0 then    -- only say when they first start touching
-        text = text.."\n"..a:getUserData().." touching "..b:getUserData()
-    elseif persisting < 20 then    -- then just start counting
-        text = text.." "..persisting
+    local a_owner = a:getUserData()
+    if a_owner and a_owner.pre_solve then
+        a_owner:pre_solve(a, b, coll)
     end
-    persisting = persisting + 1    -- keep track of how many updates they've been touching for--]]
+    local b_owner = b:getUserData()
+    if b_owner and b_owner.pre_solve then
+        b_owner:pre_solve(b, a, coll)
+    end
 end
 
 local function post_solve(a, b, coll, normalimpulse, tangentimpulse)
+    local a_owner = a:getUserData()
+    if a_owner and a_owner.post_solve then
+        a_owner:post_solve(a, b, coll, normalimpulse, tangentimpulse)
+    end
+    local b_owner = b:getUserData()
+    if b_owner and b_owner.post_solve then
+        b_owner:post_solve(b, a, coll, normalimpulse, tangentimpulse)
+    end
 end
 
 local function construct_and_enter_level()
@@ -54,11 +64,13 @@ local function construct_and_enter_level()
     local intro_draw = function(self)
         local w = love.graphics.getWidth()
         local h = love.graphics.getHeight()
-        love.graphics.setColor(1.0, 0.6, 0.4, intro_data.title_alpha)
-        love.graphics.setFont(_G.ASSETS:get("luciferius_inverted_l"))
+        local fg = _G.CONF.main_color
+        love.graphics.setColor(fg[1], fg[2], fg[3], intro_data.title_alpha)
+        love.graphics.setFont(_G.ASSETS:get("font_inverted_l"))
         love.graphics.printf("Level " .. tostring(pool.data.current_level), 0, h * 1 / 5, w, "center")
-        love.graphics.setColor(0.8, 0.9, 0.9, intro_data.title_alpha)
-        love.graphics.setFont(_G.ASSETS:get("luciferius_italics_m"))
+        local afg = _G.CONF.accent_color
+        love.graphics.setColor(afg[1], afg[2], afg[3], intro_data.title_alpha)
+        love.graphics.setFont(_G.ASSETS:get("font_italics_m"))
         love.graphics.printf(pool.data:get_current_level_config().description, w * 1 / 3, h * 2 / 5, w * 1 / 3, "left")
     end
 
@@ -115,7 +127,7 @@ local function enter()
         end,
         adjust_score = function(self, by)
             pool:emit("score_adjusted", by)
-            self.score = self.score + by
+            self.score = self.score + by * pool.data:get_current_level_config().score_multiplier
         end,
     }
 
@@ -134,7 +146,7 @@ local function enter()
         end
         pool.data.level:clear()
 
-        local color = {1, 1, 1, 1}
+        local color = _G.CONF.default_color
         if from then
             color = from.echo_color
         end
@@ -150,15 +162,16 @@ local function enter()
             pool.data.camera:unapply()
         end
         anim:add_frame(15, function()
-            -- TODO: Death screen
-            state.switch("title")
+            state.switch("title", "attempt_n", {
+                message = "You died!",
+                score = pool.data.score
+            })
         end)
     end)
     pool:on("reached_exit", function()
         pool.data:adjust_score(pool.data:get_current_level_config().level_complete_score)
 
         pool.data.level:clear()
-        pool.data.current_level = pool.data.current_level + 1
 
         local circle_data
         local circle_draw = function(self)
@@ -176,9 +189,12 @@ local function enter()
             anim.draw = circle_draw
         end)
         anim:add_frame(15, function()
+            pool.data.current_level = pool.data.current_level + 1
             if pool.data.current_level == 10 then
-                -- TODO: Victory screen.
-                state.switch("title")
+                state.switch("title", "attempt_n", {
+                    message = "You escaped!",
+                    score = pool.data.score
+                })
                 return
             end
 
@@ -230,7 +246,7 @@ function love.draw()
 
     -- Rulers
     if _G.CONF.display_rulers then
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(_G.CONF.default_color)
         love.graphics.setLineWidth(1)
         for x = math.multiple(pool.data.camera.x, 100), pool.data.camera.x + love.graphics.getWidth(), 100 do
             love.graphics.line(x, pool.data.camera.y, x, pool.data.camera.y + 5)
@@ -249,7 +265,7 @@ function love.draw()
     if _G.CONF.display_diagnostics then
         love.graphics.setFont(_G.ASSETS:get("default_font"))
         love.graphics.setLineWidth(1)
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(_G.CONF.default_color)
         love.graphics.print(love.timer.getFPS(), 0, 0)
         love.graphics.print(math.floor(collectgarbage("count")) .. "kb", 0, 12)
     end
@@ -263,17 +279,25 @@ function love.draw()
     local bar_height_h = bar_height / 2
     local bottom_margin = 30
     love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(_G.CONF.default_color)
     love.graphics.rectangle("line", w / 2 - bar_width_h, h - bar_height_h - bottom_margin, bar_width, bar_height)
     local energy = pool.data.bat.energy / 100
     love.graphics.rectangle("fill", w / 2 - bar_width_h, h - bar_height_h - bottom_margin, bar_width * energy, bar_height)
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("line", w / 2 - bar_width_h - 1, h - bar_height_h - bottom_margin - 1, bar_width + 2, bar_height + 2)
 
-    local fhh = _G.ASSETS:get("luciferius_regular_s"):getHeight() / 2
-    love.graphics.setFont(_G.ASSETS:get("luciferius_regular_s"))
+    love.graphics.setColor(_G.CONF.default_color)
+    local fhh = _G.ASSETS:get("font_regular_s"):getHeight() / 2
+    love.graphics.setFont(_G.ASSETS:get("font_regular_s"))
     if pool.data.clock >= 0 then
         love.graphics.printf(tostring(pool.data.score),  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width / 2, "left")
-        local time_string = ("%02d:%02d"):format(math.floor(pool.data.clock / 60), math.floor(pool.data.clock) % 60)
-        love.graphics.printf(time_string,  w / 2, h - bottom_margin / 2 - fhh, bar_width / 2, "right")
+        if pool.data.clock < 30 then
+            love.graphics.setColor(_G.CONF.main_color)
+        end
+        if pool.data.clock >= 10 or math.random() > 0.2 then
+            local time_string = ("%02d:%02d"):format(math.floor(pool.data.clock / 60), math.floor(pool.data.clock) % 60)
+            love.graphics.printf(time_string,  w / 2, h - bottom_margin / 2 - fhh, bar_width / 2, "right")
+        end
     else
         love.graphics.printf(tostring(pool.data.score),  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width, "center")
     end
@@ -292,12 +316,19 @@ function love.keypressed(key, scancode, isrepeat)
     if key == "f" and love.keyboard.isDown("lctrl") and not isrepeat then
         pool:emit("reached_exit")
     end
+    if key == "w" and love.keyboard.isDown("lctrl") and not isrepeat then
+        pool.data.current_level = 9
+        pool:emit("reached_exit")
+    end
     if key == "q" and love.keyboard.isDown("lctrl") and not isrepeat then
         pool.data.bat.energy = 100
     end
 
     if key == "r" and not isrepeat then
         _G.CONF.display_rulers = not _G.CONF.display_rulers
+    end
+    if key == "m" and not isrepeat then
+        love.audio.setVolume(1 - love.audio.getVolume())
     end
 end
 
