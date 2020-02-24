@@ -327,6 +327,9 @@ function love.keypressed(key, scancode, isrepeat)
     if key == "r" and love.keyboard.isDown("lctrl") and not isrepeat then
         construct_and_enter_level()
     end
+    if key == "x" and love.keyboard.isDown("lctrl") and not isrepeat then
+        pool.data.bat:adjust_energy(-100)
+    end
     if key == "f" and love.keyboard.isDown("lctrl") and not isrepeat then
         pool:emit("reached_exit")
     end

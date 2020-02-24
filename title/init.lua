@@ -34,8 +34,8 @@ local shows = {
         local h = love.graphics.getHeight()
     
         container = helium(elements.vcontainer)({children = {
-            {elem = elements.label, height = 50, padding_v = 0.2, params = {text = data.message, font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
-            {elem = elements.label, height = 300, padding_v = 0.2, params = {text = "Total score: " .. tostring(data.score)}},
+            {elem = elements.label, height = 70, padding_v = 0.1, params = {text = data.message, font = _G.ASSETS:get("font_inverted_l"), fg = _G.CONF.main_color}},
+            {elem = elements.label, height = 100, params = {text = "Total score: " .. tostring(data.score), font = _G.ASSETS:get("font_italics_m")}},
             {elem = elements.button, width = 120, height = 40, params = {text = "Main Menu", font = _G.ASSETS:get("font_regular_s"), callback = function() show("main") end}},
         }}, w, h * 7 / 8)
         container:draw(0, h * 1 / 8)
