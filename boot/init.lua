@@ -8,7 +8,7 @@ TODO (- not started; + started; * finished)
 * Chirping and echoing with raycasting.
 * Create finite world representation.
 * Generate world function with:
-    * Builds varying sized trunks.
+    * Builds varying sized fires.
     * Constructs outer wall.
     * Picks a start spawn and end location.
     + Configuration for difficulty, size, etc.
@@ -54,7 +54,7 @@ _G.ASSETS = require("common").Assets.new()
 _G.CONF = require("conf")
 _G.CONSTS = {
     category_bat = 1,
-    category_object = 2,
+    category_fire = 2,
     category_insect = 3,
     category_hawk = 4,
     category_sensor = 5,

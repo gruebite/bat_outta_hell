@@ -8,7 +8,7 @@ Wall.__index = Wall
 function Wall.new(pool, tl, br)
     local body = love.physics.newBody(pool.data.world, (br.x + tl.x) / 2, (br.y + tl.y) / 2, "static")
     local fixt = love.physics.newFixture(body, love.physics.newRectangleShape(br.x - tl.x, br.y - tl.y))
-    fixt:setCategory(_G.CONSTS.category_object)
+    fixt:setCategory(_G.CONSTS.category_fire)
     local self = setmetatable({
         is_wall = true,
         -- Turn into functions and use shape?
@@ -29,24 +29,24 @@ function Wall:draw()
     end
 end
 
-local Trunk = setmetatable({}, {__index = mobs.Mob})
-Trunk.__index = Trunk
+local Fire = setmetatable({}, {__index = mobs.Mob})
+Fire.__index = Fire
 
-function Trunk.new(pool, x, y, radius)
+function Fire.new(pool, x, y, radius)
     local body = love.physics.newBody(pool.data.world, x, y, "static")
     local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
-    fixt:setCategory(CONSTS.category_object)
+    fixt:setCategory(CONSTS.category_fire)
     local self = setmetatable({
-        is_object = true,
+        is_fire = true,
         pool = pool,
         body = body,
-        echo_color = _G.CONF.object_echo_color
-    }, Trunk)
+        echo_color = _G.CONF.fire_echo_color
+    }, Fire)
     fixt:setUserData(self)
     return self
 end
 
-function Trunk:draw()
+function Fire:draw()
     if _G.CONF.debug_mode then
         love.graphics.setColor(self.echo_color)
         local x, y = self.body:getPosition()
@@ -60,14 +60,14 @@ Exit.__index = Exit
 function Exit.new(pool, x, y, radius)
     local body = love.physics.newBody(pool.data.world, x, y, "static")
     local fixt = love.physics.newFixture(body, love.physics.newCircleShape(radius))
-    fixt:setCategory(CONSTS.category_object)
+    fixt:setCategory(CONSTS.category_fire)
     fixt:setMask(CONSTS.category_insect, CONSTS.category_hawk)
     local self = setmetatable({
         is_exit = true,
         pool = pool,
         body = body,
         echo_color = _G.CONF.exit_echo_color
-    }, Trunk)
+    }, Fire)
     fixt:setUserData(self)
     return self
 end
@@ -148,8 +148,8 @@ function Level:construct(with_amethyst)
     -- Threshold for r2 minimun guaranteed distance (scaled).
     local spacing = self.pool.data:get_current_level_config().spacing or 200
 
-    local trunk_radius_min = self.pool.data:get_current_level_config().trunk_radius_min or 20
-    local trunk_radius_max = self.pool.data:get_current_level_config().trunk_radius_max or 30
+    local fire_radius_min = self.pool.data:get_current_level_config().fire_radius_min or 20
+    local fire_radius_max = self.pool.data:get_current_level_config().fire_radius_max or 30
     -- Number of mob start positions generated.
     local insect_count = self.pool.data:get_current_level_config().insect_count or 3
     local hawk_count = self.pool.data:get_current_level_config().hawk_count or 1
@@ -175,8 +175,8 @@ function Level:construct(with_amethyst)
         end
         if love.math.random() >= culling then
             local pos = new_r2_point(index)
-            local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
-            self.pool:queue(Trunk.new(self.pool, pos.x, pos.y, radius))
+            local radius = love.math.random() * (fire_radius_max - fire_radius_min) + fire_radius_min
+            self.pool:queue(Fire.new(self.pool, pos.x, pos.y, radius))
         end
         index = index + 1
     end
@@ -186,7 +186,7 @@ function Level:construct(with_amethyst)
 
     index = index + 1
     local exit_pos = new_r2_point(index)
-    local radius = love.math.random() * (trunk_radius_max - trunk_radius_min) + trunk_radius_min
+    local radius = love.math.random() * (fire_radius_max - fire_radius_min) + fire_radius_min
     self.pool:queue(Exit.new(self.pool, exit_pos.x, exit_pos.y, radius))
 
     if with_amethyst then

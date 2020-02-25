@@ -61,6 +61,13 @@ local function post_solve(a, b, coll, normalimpulse, tangentimpulse)
 end
 
 local function construct_and_enter_level()
+    -- Reset level stats.
+    pool.data.score_flags = {
+        hit_fire = false,
+        hit_hawk = false,
+        consumed = false,
+    }
+
     local intro_data
     local intro_draw = function(self)
         local w = love.graphics.getWidth()
@@ -129,8 +136,13 @@ local function enter()
             return _G.CONF.levels[self.current_level]
         end,
         adjust_score = function(self, by)
-            pool:emit("score_adjusted", by)
             self.score = self.score + by * pool.data:get_current_level_config().score_multiplier
+            local diff = self.score - self.display_score
+            _G.ASSETS:get("score"):play()
+            _G.ASSETS:get("score"):setLooping(true)
+            flux.to(self, diff / 20, {display_score = self.score}):oncomplete(function()
+                _G.ASSETS:get("score"):stop()
+            end)
         end,
     }
 
@@ -142,9 +154,9 @@ local function enter()
 
     construct_and_enter_level()
 
-    pool:on("score_adjusted", function(by)
-    end)
     pool:on("energy_adjusted", function(by, prev, curr, from)
+        local diff = math.abs(curr - prev)
+        flux.to(pool.data, diff / 50, {display_energy = pool.data.bat.energy})
         if curr > 0 then
             return
         end
@@ -168,12 +180,26 @@ local function enter()
         anim:add_frame(15, function()
             state.switch("title", "attempt_n", "death", {
                 message = "You died!",
-                score = pool.data.score
+                score = pool.data.score,
+                level = pool.data.current_level
             })
         end)
     end)
     pool:on("reached_exit", function()
-        pool.data:adjust_score(pool.data:get_current_level_config().level_complete_score)
+        local bonus = pool.data:get_current_level_config().level_complete_score
+        if not pool.data.hit_fire then
+            bonus = bonus + pool.data:get_current_level_config().no_hit_fire_score
+        end
+        if not pool.data.hit_hawk and pool.data:get_current_level_config().hawk_count > 0 then
+            bonus = bonus + pool.data:get_current_level_config().no_hit_hawk_score
+        end
+        if not pool.data.consumed and pool.data:get_current_level_config().insect_count > 0 then
+            bonus = bonus + pool.data:get_current_level_config().no_consume_score
+        end
+        if pool.data.clock > 0 then
+            bonus = bonus + math.floor(pool.data.clock) * pool.data:get_current_level_config().time_remaining_score
+        end
+        pool.data:adjust_score(bonus)
 
         pool.data.level:clear()
         -- Previous level artifacts.
@@ -229,6 +255,8 @@ function love.update(dt)
     if pool.data.clock >= 0 then
         pool.data.clock = pool.data.clock - dt
         if pool.data.clock <= 0 then
+            -- Negatives are disabled. This says we ran out of time.
+            pool.data.clock = 0
             pool.data.bat:adjust_energy(-110)
         end
     end
@@ -289,8 +317,14 @@ function love.draw()
     local bottom_margin = 30
     love.graphics.setLineWidth(1)
     love.graphics.setColor(_G.CONF.default_color)
+    if pool.data.display_energy ~= pool.data.bat.energy then
+        love.graphics.setColor(_G.CONF.main_color)
+        if love.math.random() < 0.2 then
+            love.graphics.setColor(0, 0, 0, 1)
+        end
+    end    
     love.graphics.rectangle("line", w / 2 - bar_width_h, h - bar_height_h - bottom_margin, bar_width, bar_height)
-    local energy = pool.data.bat.energy / 100
+    local energy = pool.data.display_energy / 100
     love.graphics.rectangle("fill", w / 2 - bar_width_h, h - bar_height_h - bottom_margin, bar_width * energy, bar_height)
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.rectangle("line", w / 2 - bar_width_h - 1, h - bar_height_h - bottom_margin - 1, bar_width + 2, bar_height + 2)
@@ -308,7 +342,16 @@ function love.draw()
             love.graphics.printf(time_string,  w / 2, h - bottom_margin / 2 - fhh, bar_width / 2, "right")
         end
     else
-        love.graphics.printf("Score: " .. tostring(pool.data.score),  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width, "center")
+        if pool.data.display_score ~= pool.data.score then
+            local c = _G.CONF.insect_echo_color
+            local alpha = 1
+            if love.math.random() < 0.2 then
+                alpha = 0
+            end
+            love.graphics.setColor(c[1], c[2], c[3], alpha)
+        end
+        local score = ("%05d"):format(math.floor(pool.data.display_score))
+        love.graphics.printf(score,  w / 2 - bar_width_h, h - bottom_margin / 2 - fhh, bar_width, "center")
     end
 end
 

@@ -38,7 +38,7 @@ local function find_fixture_contact_point(pos, to_fixt)
         elseif pos.x > m.br.x then
             fx, fy = m.br.x - 5, pos.y
         else
-            -- Inside. Use center of object in this case so insects can dodge walls.
+            -- Inside. Use center of fire in this case so insects can dodge walls.
         end
     end
     return fx, fy
@@ -117,7 +117,7 @@ end
 
 function Echo:draw()
     --self.effect(function()
-        local strength = 1 - math.pow(self.size / self.pool.data:get_current_level_config().echo_vanishing_distance, 1.5)
+        local strength = (1 - math.pow(self.size / self.pool.data:get_current_level_config().echo_vanishing_distance, 1.5))
         love.graphics.setLineWidth(self.pool.data:get_current_level_config().echo_weight * strength)
         self.color[4] = strength
         love.graphics.setColor(self.color)
@@ -220,6 +220,7 @@ function Bat.new(pool, x, y)
 
         _boosting = false,
         _stun_timer = 0,
+        _invulnerable = 0,
         _boosting_timer = 0,
         _boosting_decay = 0,
         _chirping = false,
@@ -254,6 +255,7 @@ function Bat:update(dt)
     self.chirp_pool:flush()
     self.chirp_pool:emit("update", dt)
 
+    self._invulnerable = self._invulnerable - dt
     if self._stun_timer > 0 then
         self.body:setLinearVelocity(self._stun_throwback.x, self._stun_throwback.y)
         self._stun_timer = self._stun_timer - dt
@@ -327,7 +329,9 @@ function Bat:draw()
     love.graphics.setStencilTest()
 
     love.graphics.setColor(1.0, 1.0, 1.0)
-    if (self.stunned and love.math.random() > 0.2) then
+    if self._invulnerable > 0 and love.math.random() > 0.2 then
+        love.graphics.setColor(_G.CONF.accent_color)
+    elseif self.stunned and love.math.random() > 0.2 then
         love.graphics.setColor(_G.CONF.main_color)
     end
     love.graphics.draw(_G.ASSETS:get("bat", math.floor(self._anim.frame)), x, y, self._dir, 1, 1, 8, 8)
@@ -347,6 +351,7 @@ function Bat:begin_contact(fixt, other, coll)
         return
     end
     if owner.is_insect then
+        self.pool.data.consumed = true
         self:adjust_energy(self.pool.data:get_current_level_config().insect_consume_energy, owner)
         _G.ASSETS:get("crunch"):play()
         owner:kill()
@@ -357,7 +362,6 @@ function Bat:begin_contact(fixt, other, coll)
         owner:kill()
         return
     end
-    _G.ASSETS:get("squeek"):play()
     local x, y = coll:getNormal()
     -- Determine if the normal points to us or the object. We want it to point away from object.
     local bx, by = self.body:getPosition()
@@ -368,21 +372,41 @@ function Bat:begin_contact(fixt, other, coll)
         y = -y
     end
 
+    if self._invulnerable > 0 then
+        return
+    end
+    _G.ASSETS:get("squeek"):play()
+
     self._stun_throwback = Vec2.new(x * 400, y * 400)
-    self._stun_timer = 0.1
+    self._stun_timer = 0.1 -- Good number for pushback given the throwback above.
+    self._invulnerable = self.pool.data:get_current_level_config().bat_invulnerability
     self.stunned = true
     if owner.is_hawk then
+        self.pool.data.hit_hawk = true
         self:adjust_energy(-self.pool.data:get_current_level_config().hawk_bump_damage, owner)
-    elseif owner.is_object then
-        self:adjust_energy(-self.pool.data:get_current_level_config().object_bump_damage, owner)
+    elseif owner.is_fire then
+        self.pool.data.hit_fire = true
+        self:adjust_energy(-self.pool.data:get_current_level_config().fire_bump_damage, owner)
     else
         self:adjust_energy(-self.pool.data:get_current_level_config().wall_bump_damage, owner)
     end
 end
 
 function Bat:clear_echos_and_chirps()
-    self.chirp_pool:remove(function() return true end)
-    self.echo_pool:remove(function() return true end)
+    self.chirp_pool:remove(function(e)
+        local alive = e:alive()
+        if not alive then
+            e:destroy()
+        end
+        return not alive
+    end)
+    self.echo_pool:remove(function(e)
+        local alive = e:alive()
+        if not alive then
+            e:destroy()
+        end
+        return not alive
+    end)
 end
 
 function Bat:adjust_energy(by, from)
@@ -571,6 +595,7 @@ function Hawk.new(pool, x, y)
 
         _sensor_fixt = sensor_fixt,
         _sensed = {},
+        _
     }, Hawk)
     fixt:setUserData(self)
     sensor_fixt:setUserData(self)
@@ -605,7 +630,7 @@ function Hawk:update(dt)
                 local maxi = self.pool.data:get_current_level_config().hawk_homing_time_max
                 self.homing_timer = love.math.random() * (maxi - mini) + mini
             end
-        else
+        elseif opos:distance(pos) < self.pool.data:get_current_level_config().hawk_avoid_radius then
             n = n + 1
             avoid_dir = avoid_dir:subtract(opos:subtract(pos))
         end
@@ -642,6 +667,10 @@ function Hawk:begin_contact(fixt, other, coll)
     if other:getUserData().is_bat and fixt ~= self._sensor_fixt then
         -- Hit, so stop following.
         self.homing_timer = -self.pool.data:get_current_level_config().hawk_homing_cooldown
+        local bx, by = other:getBody():getPosition()
+        local ox, oy = self.body:getPosition()
+        local opp = Vec2.new(ox, oy):subtract(bx, by):normalize():scale(self.speed)
+        self.body:setLinearVelocity(opp.x, opp.y)
     end
     self._sensed[other] = true
 end

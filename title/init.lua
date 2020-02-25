@@ -39,10 +39,16 @@ local shows = {
     attempt_n = function(data)
         local w = love.graphics.getWidth()
         local h = love.graphics.getHeight()
+
+        local msg = ""
+        if data.level then
+            msg = "Level: " .. tostring(data.level)
+        end
     
         container = helium(elements.vcontainer)({children = {
             {elem = elements.label, height = 70, padding_v = 0.1, params = {text = data.message, font = _G.ASSETS:get("font_inverted_l"), fg = _G.CONF.main_color}},
-            {elem = elements.label, height = 100, params = {text = "Total score: " .. tostring(data.score), font = _G.ASSETS:get("font_italics_m")}},
+            {elem = elements.label, height = 50, params = {text = msg, font = _G.ASSETS:get("font_regular_m")}},
+            {elem = elements.label, height = 50, padding_v = 0.3, params = {text = "Score: " .. tostring(data.score), font = _G.ASSETS:get("font_regular_m")}},
             {elem = elements.button, width = 120, height = 40, params = {text = "Main Menu", font = _G.ASSETS:get("font_regular_s"), callback = function() show("main") end}},
         }}, w, h * 7 / 8)
         container:draw(0, h * 1 / 8)
@@ -73,7 +79,7 @@ Use echo colors to determine what something is.]]}},
             {elem = elements.label, height = 20, params = {text = "Exit (next level)", fg = _G.CONF.exit_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Hellbug (restore energy)", fg = _G.CONF.insect_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Rare gem (bonus score, only 1 in all of hell!)", fg = _G.CONF.amethyst_echo_color}},
-            {elem = elements.label, height = 20, params = {text = "Pillars of fire (avoid)", fg = _G.CONF.object_echo_color}},
+            {elem = elements.label, height = 20, params = {text = "Pillars of fire (avoid)", fg = _G.CONF.fire_echo_color}},
             {elem = elements.label, height = 20, params = {text = "Surrounding cave walls (avoid)", fg = _G.CONF.wall_echo_color}},
             {elem = elements.label, height = 20, padding_v = 0.02, params = {text = "Hellhawk (avoid)", fg = _G.CONF.hawk_echo_color}},
             {elem = elements.label, height = 40, params = {text = "Controls", font = _G.ASSETS:get("font_italics_m"), fg = _G.CONF.accent_color}},
@@ -109,13 +115,13 @@ local function enter(into, play, ...)
     _G.ASSETS:load("squeek", 1, "squeek.wav", "stream")
     _G.ASSETS:load("crunch", 1, "crunch.wav", "stream")
     _G.ASSETS:load("amethyst", 1, "amethyst.wav", "stream")
-    _G.ASSETS:load("flutter", 1, "flutter.wav", "stream")
     _G.ASSETS:load("intro", 1, "intro.wav", "stream")
     _G.ASSETS:load("intro_loop", 1, "intro_loop.wav", "stream")
     _G.ASSETS:load("death", 1, "death.wav", "stream")
     _G.ASSETS:load("enter", 1, "enter.wav", "stream")
     _G.ASSETS:load("escape", 1, "escape.wav", "stream")
     _G.ASSETS:load("exit", 1, "twang.wav", "stream")
+    _G.ASSETS:load("score", 1, "score.wav", "stream")
     _G.ASSETS:load("font_regular_s", 1, "luciferius_regular.ttf", 16)
     _G.ASSETS:load("font_regular_m", 1, "luciferius_regular.ttf", 24)
     _G.ASSETS:load("font_italics_s", 1, "luciferius_italics.ttf", 16)
@@ -153,7 +159,7 @@ local function enter(into, play, ...)
         }
         ent.vel = ent.vel:scale(ent.speed)
         local anim = common.Anim.new(1 / love.math.random(10, 30), true, true, 3, function(self)
-            love.graphics.setColor(0.4, 0.4, 0.4, 1)
+            love.graphics.setColor(0.2, 0.2, 0.2, 1)
             love.graphics.draw(_G.ASSETS:get("bat", math.floor(self.frame)), ent.pos.x, ent.pos.y, ent.vel:angle(), 1, 1, 8, 8)
         end)
         table.insert(ent.anims, anim)
@@ -172,13 +178,15 @@ function love.update(dt)
     pool:emit("update", dt)
     if not _G.ASSETS:get(playing):isPlaying() then
         playing = "intro_loop"
-        _G.ASSETS:get(playing):play()
+        if current == "main" then
+            _G.ASSETS:get(playing):play()
+        end
     end
 end
 
 function love.draw()
-    pool:emit("draw")
     if current ~= "main" then return end
+    pool:emit("draw")
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
     love.graphics.setColor(_G.CONF.main_color)

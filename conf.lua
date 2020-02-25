@@ -7,7 +7,7 @@ local level_defaults = {
     time_remaining_score = 1, -- Per second remaining. Only counts on timed levels.
     no_consume_score = 10,
     no_hit_hawk_score = 20,
-    no_hit_object_score = 30,
+    no_hit_fire_score = 30,
 
     echo_speed = 400,
     -- Echos are slowed down when passing over the bat. This is a good number.
@@ -23,9 +23,10 @@ local level_defaults = {
     bat_speed = 120,
     bat_boost_speed = 200,
     bat_boost_delay = 0.2, -- Before boosting occurs.
-    bat_boost_energy_decay = 5, -- Energy/second.
+    bat_boost_energy_decay = 2, -- Energy/second.
     -- How large the visible waves are. This should remain pretty constant.
     bat_ear_size = 32,
+    bat_invulnerability = 2.0,
 
     insect_radius = 8,
     insect_consume_energy = 5,
@@ -33,7 +34,7 @@ local level_defaults = {
     insect_speed_min = 40,
     insect_speed_max = 80,
     insect_oblivious_chance = 0.5,
-    insect_sensor_radius = 80,
+    insect_sensor_radius = 16,
 
     amethyst_radius = 8,
     amethyst_consume_score = 100,
@@ -41,13 +42,14 @@ local level_defaults = {
     hawk_radius = 8,
     hawk_speed_min = 80,
     hawk_speed_max = 140,
+    hawk_avoid_radius = 20,
     hawk_sensor_radius = 160,
     hawk_homing_time_min = 2,
     hawk_homing_time_max = 5,
     hawk_homing_cooldown = 8,
     hawk_bump_damage = 10,
 
-    object_bump_damage = 5,
+    fire_bump_damage = 5,
     wall_bump_damage = 1,
 
     -- Level generation.
@@ -55,8 +57,8 @@ local level_defaults = {
     height = 1000,
     culling = 0.0,
     spacing = 400,
-    trunk_radius_min = 20,
-    trunk_radius_max = 30,
+    fire_radius_min = 20,
+    fire_radius_max = 30,
     insect_count = 1,
     hawk_count = 0,
 }
@@ -77,7 +79,7 @@ local conf = {
     hawk_echo_color = {0.87, 0.33, 0.09, 1.0}, -- Main color - red
     insect_echo_color = {0.09, 0.64, 0.87, 1.0}, -- Accent color - cyan
     wall_echo_color = {0.86, 0.87, 0.86, 1.0}, -- Default color - white
-    object_echo_color = {0.87, 0.85, 0.09, 1.0}, -- Yellow
+    fire_echo_color = {0.87, 0.85, 0.09, 1.0}, -- Yellow
     exit_echo_color = {0.09, 0.87, 0.18, 1.0}, -- Green
     amethyst_echo_color = {0.87, 0.09, 0.67, 1.0}, -- Purple
 
@@ -85,13 +87,13 @@ local conf = {
     -- 9 levels of hell. Level configuration matches `Level` config parameter.
     levels = {
         setmetatable({
-            description = [[The easiest level of hell, but do not get comfortable.]],
+            description = [[The easiest level. Take your time.]],
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[More fire.]],
+            description = [[This level has more fire.]],
             spacing = 200,
             culling = 0.1,
-            object_bump_damage = 20,
+            fire_bump_damage = 20,
         }, {__index = level_defaults}),
         setmetatable({
             description = [[Don't get lost.]],
@@ -114,22 +116,22 @@ local conf = {
             hawk_count = 3,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[It's hot down here.]],
+            description = [[It's hot down here, better be quick.]],
             time_limit = 120,
             width = 1500,
             height = 1500,
             spacing = 300,
             culling = 0.2,
-            object_bump_damage = 30,
+            fire_bump_damage = 30,
             insect_count = 7,
             insect_consume_energy = 10,
             insect_consume_score = 16,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[This hellhawk is strong. And fast.]],
+            description = [[This hellhawk is stronger and faster than the others.]],
             width = 800,
             height = 800,
-            spacing = 800, -- No objects.
+            spacing = 800, -- No fires.
             insect_count = 0,
             hawk_count = 1,
             hawk_speed_min = 100,
@@ -173,7 +175,7 @@ conf.colors = {
     conf.hawk_echo_color,
     conf.insect_echo_color,
     conf.wall_echo_color,
-    conf.object_echo_color,
+    conf.fire_echo_color,
     conf.exit_echo_color,
     conf.amethyst_echo_color,
 }
