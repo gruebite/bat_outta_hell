@@ -106,25 +106,26 @@ local conf = {
             hawk_count = 1,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[You havent escaped yet.]],
+            description = [[There's more of them.]],
             spacing = 300,
             culling = 0.2,
             insect_count = 2,
             hawk_count = 3,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[Find the exit fast. You can't eat them all.]],
+            description = [[It's hot down here.]],
             time_limit = 120,
             width = 1500,
             height = 1500,
             spacing = 300,
             culling = 0.2,
+            object_bump_damage = 30,
             insect_count = 7,
             insect_consume_energy = 10,
             insect_consume_score = 16,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[This one is big. And fast.]],
+            description = [[This hellhawk is strong. And fast.]],
             width = 800,
             height = 800,
             spacing = 800, -- No objects.
@@ -136,7 +137,7 @@ local conf = {
             hawk_bump_damage = 30,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[It's a swarm.]],
+            description = [[A swarm.]],
             time_limit = 180,
             width = 1500,
             height = 1500,
@@ -163,6 +164,17 @@ local conf = {
             hawk_bump_damage = 20,
         }, {__index = level_defaults}),
     },
+}
+
+conf.colors = {
+    conf.hawk_echo_color, 
+    conf.insect_echo_color, 
+    conf.hawk_echo_color,
+    conf.insect_echo_color,
+    conf.wall_echo_color,
+    conf.object_echo_color,
+    conf.exit_echo_color,
+    conf.amethyst_echo_color,
 }
 
 local i = 2

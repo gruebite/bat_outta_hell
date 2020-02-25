@@ -6,7 +6,7 @@ local style = {
     default = {0, 0, 0, 1},
     hover = _G.CONF.main_color,
     border = _G.CONF.default_color,
-    bg = {0, 0, 0, 1},
+    bg = {0, 0, 0, 0},
     fg = _G.CONF.default_color,
 }
 

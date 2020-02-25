@@ -1,12 +1,19 @@
 
+local nata = require("lib.nata")
 local helium = require("lib.helium")
 
 local common = require("common")
 local state = require("common.state")
+local geom = require("common.geom")
 local elements = require("common.elements")
+
+local boids = require(_P(..., "boids"))
 
 local playing = "intro"
 
+local current
+
+local pool
 local container
 
 local show
@@ -87,6 +94,7 @@ show = function(name, ...)
     if container then
         container:undraw()
     end
+    current = name
     shows[name](...)
     if not _G.ASSETS:get(playing):isPlaying() then
         _G.ASSETS:get(playing):play()
@@ -119,6 +127,38 @@ local function enter(into, play, ...)
 
     playing = play or playing
     show(into or "main", ...)
+
+    pool = nata.new {
+        groups = {
+            boids = {filter = {"pos", "vel", "speed"}},
+            anims = {filter = {"anims"}},
+            chirps = {filter = {"pos", "size"}},
+        },
+        systems = {
+            boids.BoidsSystem,
+            boids.AnimationSystem,
+            boids.ChirpSystem,
+        }
+    }
+
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    for i = 1, 80 do
+        local ent = {
+            pos = geom.Vec2.new(love.math.random(10, w - 10), love.math.random(10, h - 10)),
+            vel = geom.Vec2.new(1, 0):rotate(love.math.random() * math.pi * 2),
+            speed = love.math.random(100, 200),
+            anims = {},
+        }
+        ent.vel = ent.vel:scale(ent.speed)
+        local anim = common.Anim.new(1 / love.math.random(10, 30), true, true, 3, function(self)
+            love.graphics.setColor(0.4, 0.4, 0.4, 1)
+            love.graphics.draw(_G.ASSETS:get("bat", math.floor(self.frame)), ent.pos.x, ent.pos.y, ent.vel:angle(), 1, 1, 8, 8)
+        end)
+        table.insert(ent.anims, anim)
+        pool:queue(ent)
+    end
 end
 
 local function exit()
@@ -127,6 +167,9 @@ local function exit()
 end
 
 function love.update(dt)
+    pool:remove(function(e) return e.dead end)
+    pool:flush()
+    pool:emit("update", dt)
     if not _G.ASSETS:get(playing):isPlaying() then
         playing = "intro_loop"
         _G.ASSETS:get(playing):play()
@@ -134,6 +177,8 @@ function love.update(dt)
 end
 
 function love.draw()
+    pool:emit("draw")
+    if current ~= "main" then return end
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
     love.graphics.setColor(_G.CONF.main_color)

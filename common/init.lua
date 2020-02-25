@@ -45,7 +45,7 @@ end
 local Anim = {}
 Anim.__index = Anim
 
-function Anim.new(time_step, playing, looping, frame_count)
+function Anim.new(time_step, playing, looping, frame_count, draw)
     return setmetatable({
         time_step = time_step or 0.1,
         playing = playing,
@@ -55,6 +55,7 @@ function Anim.new(time_step, playing, looping, frame_count)
         prev_frame = 0,
         frame_count = frame_count or 0,
         frames = {},
+        draw = draw,
     }, Anim)
 end
 
