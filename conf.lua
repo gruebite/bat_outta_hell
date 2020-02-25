@@ -87,7 +87,7 @@ local conf = {
             description = [[The easiest level of hell, but do not get comfortable.]],
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[More objects. Are they trees or pillars of fire?]],
+            description = [[More fire.]],
             spacing = 200,
             culling = 0.1,
             object_bump_damage = 20,
@@ -106,7 +106,7 @@ local conf = {
             hawk_count = 1,
         }, {__index = level_defaults}),
         setmetatable({
-            description = [[Out of the frying pan and into the fire.]],
+            description = [[You havent escaped yet.]],
             spacing = 300,
             culling = 0.2,
             insect_count = 2,
