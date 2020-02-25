@@ -345,6 +345,21 @@ function love.keypressed(key, scancode, isrepeat)
     end
 end
 
+function love.wheelmoved(x, y)
+    if _G.CONF.debug_mode then
+        if y > 0 then
+            pool.data.camera:scale(0.9)
+        else
+            pool.data.camera:scale(1.11111111)
+        end
+    end
+end
+
+function love.resize(w, h)
+    local cw, ch = love.graphics.getWidth(), love.graphics.getHeight()
+    pool.data.camera:scale(w / cw, h / cw)
+end
+
 return {
     enter = enter
 }

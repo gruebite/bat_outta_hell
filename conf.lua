@@ -64,6 +64,7 @@ local level_defaults = {
 local conf = {
     width = 960,
     height = 720,
+    fullscreen = false,
 
     debug_mode = false,
     display_diagnostics = false,

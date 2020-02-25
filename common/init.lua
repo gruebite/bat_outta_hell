@@ -192,18 +192,18 @@ function Camera:set_scale(sx, sy)
   self.scale_y = sy or self.scale_y
 end
 
-function Camera:project(x, y)
-    local v = geom.Vec2.new(x, y):add(self.x, self.y):scale(self.scale_x, self.scale_y):rotate(self.rotation)
+function Camera:unproject(x, y)
+    local v = geom.Vec2.new(x, y):scale(self.scale_x, self.scale_y):add(self.x, self.y):rotate(self.rotation)
     return v.x, v.y
 end
 
-function Camera:unproject(x, y)
-    local v = geom.Vec2.new(x, y):rotate(-self.rotation):scale(1 / self.scale_x, 1 / self.scale_y):subtract(self.x, self.y)
+function Camera:project(x, y)
+    local v = geom.Vec2.new(x, y):rotate(-self.rotation):subtract(self.x, self.y):scale(1 / self.scale_x, 1 / self.scale_y)
     return v.x, v.y
 end
 
 function Camera:mouse_position()
-    return self:project(love.mouse.getX(), love.mouse.getY())
+    return self:unproject(love.mouse.getX(), love.mouse.getY())
 end
 
 function Camera:center_on(x, y)
@@ -211,7 +211,7 @@ function Camera:center_on(x, y)
 end
 
 function Camera:follow(x, y)
-    local screen_x, screen_y = self:unproject(x, y)
+    local screen_x, screen_y = self:project(x, y)
     local screen_w, screen_h = love.graphics.getWidth(), love.graphics.getHeight()
     local moving = geom.Vec2.new(0, 0)
     if screen_x < screen_w * self.bounds_x then

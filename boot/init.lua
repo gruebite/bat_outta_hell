@@ -63,6 +63,14 @@ _G.CONTROL_KEYS = function(key, scancode, isrepeat)
     if key == "m" and not isrepeat then
         love.audio.setVolume(1 - love.audio.getVolume())
     end
+    if key == "return" and love.keyboard.isDown("lshift") then
+        local success = love.window.setFullscreen(not _G.CONF.fullscreen, "desktop")
+        if not success then
+            print("! failed to set fullscreen to " .. tostring(not _G.CONF.fullscreen))
+        else
+            _G.CONF.fullscreen = not _G.CONF.fullscreen
+        end
+    end
 end
 
 function math.round(n, deci) deci = 10^(deci or 0) return math.floor(n * deci + .5) / deci end
